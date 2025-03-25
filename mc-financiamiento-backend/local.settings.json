@@ -1,0 +1,37 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Debug",
+      "Microsoft": "Debug",
+      "Microsoft.Hosting.Lifetime": "Debug"
+    }
+  },
+  "Integration": {
+    "GoRules.Endpoint.001": "http://localhost:3001/engine/execute",
+    "GoRules.Endpoint.002": "https://financiamiento.gorules.io/api/projects/demo/evaluate/caliddaunderwritingcredit-fnb",
+    "GoRules.Endpoint.001.X-Access-Token-value": "dAG920pF3K3XQ8qQOvATPIun",
+    "GoRules.Endpoint.001.X-Access-Token-Key": "X-Access-Token"
+  },
+  "Data": {
+    "NoSql.CosmosDb": "AccountEndpoint=https://cosmos-digital.documents.azure.com:443/;AccountKey=BsbdmauQWrmIOa8W3u8Gp604sO1x9kXKCSzWWl7zc5TPleTCDaeI2fdzHR6hHXhJ9IPYK7nIIombACDbVnnVQg==;"
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "DataSource=app.db;Cache=Shared"
+  },
+  "OpenTelemetry": {
+    "ServiceName": "mc-financiamiento-bancked"
+  },
+  "ApplicationInsights": {
+    "ConnectionString": "InstrumentationKey=5445e5fe-c76a-4f17-b65b-981f8a4f447e;IngestionEndpoint=https://eastus-8.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus.livediagnostics.monitor.azure.com/;ApplicationId=f86f8726-55db-4edc-bc65-36bba3d8c76d"
+  },
+  "loanConfig": {
+    "decision": "financiamiento",
+    "modelo": "CaliddaUnderwritingCreditFNB"
+  },
+  "Polly": {
+    "RetryCount": 3,
+    "CircuitBreakerThreshold": 0.5,
+    "CircuitBreakerDuration": "00:01:00"
+  },
+  "AllowedHosts": "*"
+}

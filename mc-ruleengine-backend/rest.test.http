@@ -1,0 +1,32 @@
+DELETE http://localhost:3001/engine/clean HTTP/1.1
+Accept: application/json
+
+POST http://localhost:3001/engine/execute HTTP/1.1
+Accept: application/json
+Content-Type:  application/json
+
+{
+  "decision": "financiamiento",
+  "modelo": "CaliddaUnderwritingCreditFNB",
+  "inputData": {
+    "customer": {
+      "dni": "40382034",
+      "nseCategoria": "C",
+      "accountType": "P",
+      "isTenant": false
+    },
+    "transactionData": {
+      "balanceAvailable": 5000,
+      "creditBlocked": false,
+      "loanAmountRequested": 5000,
+      "loanTerm": 12
+    },
+    "historicalPreCalculated": {
+      "documentosPendientesPago": 1,
+      "numeroMesesConsumoGasZero": 0,
+      "mesesDeHabilitadoGas": 24,
+      "numeroCortesGas": 0,
+      "corteGasDurante12UltimoMeses": 0
+    }
+  }
+}

@@ -1,0 +1,369 @@
+{
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "45eead3a-c85a-45ed-9ae1-80a528023afb",
+      "name": "request",
+      "type": "inputNode",
+      "content": {
+        "schema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"customer\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"dni\": {\n          \"type\": \"string\",\n          \"format\": \"utc-millisec\"\n        },\n        \"nseCategoria\": {\n          \"type\": \"string\"\n        },\n        \"accountType\": {\n          \"type\": \"string\"\n        },\n        \"isTenant\": {\n          \"type\": \"boolean\"\n        }\n      }\n    },\n    \"transactionData\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"balanceAvailable\": {\n          \"type\": \"integer\"\n        },\n        \"creditBlocked\": {\n          \"type\": \"boolean\"\n        },\n        \"loanAmountRequested\": {\n          \"type\": \"integer\"\n        },\n        \"loanTerm\": {\n          \"type\": \"integer\"\n        }\n      }\n    },\n    \"historicalPreCalculated\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"documentosPendientesPago\": {\n          \"type\": \"integer\"\n        },\n        \"numeroMesesConsumoGasZero\": {\n          \"type\": \"integer\"\n        },\n        \"mesesDeHabilitadoGas\": {\n          \"type\": \"integer\"\n        },\n        \"numeroCortesGas\": {\n          \"type\": \"integer\"\n        },\n        \"corteGasDurante12UltimoMeses\": {\n          \"type\": \"integer\"\n        }\n      }\n    }\n  }\n}"
+      },
+      "position": {
+        "x": 110,
+        "y": 113
+      }
+    },
+    {
+      "id": "ccf698d8-8d5b-4cdc-bc01-dea505b9d550",
+      "name": "NSEValidation",
+      "type": "decisionTableNode",
+      "content": {
+        "rules": [
+          {
+            "_id": "0d85f073-b6dc-47a3-b0ef-cbc72f98993e",
+            "_description": "",
+            "80d481e4-417e-4946-9d2c-3b0c03e71862": "true",
+            "a0eeda20-4ecf-47ef-b35f-0a7706e2d0ae": "\"A\",\"B\",\"C\",\"D\""
+          },
+          {
+            "_id": "bdc52b19-23da-44ab-ab21-f4b9b3bbd813",
+            "_description": "",
+            "80d481e4-417e-4946-9d2c-3b0c03e71862": "false",
+            "a0eeda20-4ecf-47ef-b35f-0a7706e2d0ae": "\"E\""
+          }
+        ],
+        "inputs": [
+          {
+            "id": "a0eeda20-4ecf-47ef-b35f-0a7706e2d0ae",
+            "name": "NSE",
+            "field": "customer.nseCategoria"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "80d481e4-417e-4946-9d2c-3b0c03e71862",
+            "name": "ValidationNSE",
+            "field": "customerValidation.nseCategoriaValidation"
+          }
+        ],
+        "hitPolicy": "first",
+        "inputField": null,
+        "outputPath": null,
+        "passThrough": true,
+        "executionMode": "single"
+      },
+      "position": {
+        "x": 430,
+        "y": -31
+      }
+    },
+    {
+      "id": "7c338b57-b390-4ca1-833e-76f418bbf53a",
+      "name": "HistoricasValidation",
+      "type": "expressionNode",
+      "content": {
+        "inputField": null,
+        "outputPath": null,
+        "expressions": [
+          {
+            "id": "0f545136-3720-4c41-bfcd-ea734bef1381",
+            "key": "historicalValidation.documentosPendientesPagoPassed",
+            "value": "historicalPreCalculated.documentosPendientesPago==0?true:false"
+          },
+          {
+            "id": "f9772c1a-0427-4845-9532-0903dc206ab4",
+            "key": "historicalValidation.numeroMesesConsumoGasZeroPassed",
+            "value": "historicalPreCalculated.numeroMesesConsumoGasZero==0?true:false"
+          },
+          {
+            "id": "116a9f54-a478-48b7-8cbb-7cddc6b75b4f",
+            "key": "historicalValidation.mesesDeHabilitadoGasPassed",
+            "value": "historicalPreCalculated.mesesDeHabilitadoGas!=0?true:false"
+          },
+          {
+            "id": "9d08ac23-99ed-4883-925c-2ee4796af68b",
+            "key": "historicalValidation.numeroCortesGasPassed",
+            "value": "historicalPreCalculated.numeroCortesGas!=0?true:false"
+          },
+          {
+            "id": "1c2bbbcc-0267-411c-b8ea-105d7f556d2d",
+            "key": "historicalValidation.corteGasDurante12UltimoMesesPassed",
+            "value": "historicalPreCalculated.corteGasDurante12UltimoMeses!=0?true:false"
+          }
+        ],
+        "passThrough": true,
+        "executionMode": "single"
+      },
+      "position": {
+        "x": 430,
+        "y": 65
+      }
+    },
+    {
+      "id": "32d5352b-d7f3-4768-bee9-923972690868",
+      "name": "response",
+      "type": "outputNode",
+      "content": {
+        "schema": ""
+      },
+      "position": {
+        "x": 1760,
+        "y": 60
+      }
+    },
+    {
+      "id": "80a55cca-df93-471b-8149-78c7ceec77d3",
+      "name": "Consolidacion",
+      "type": "functionNode",
+      "content": {
+        "source": "import zen from 'zen';\r\n\r\n/** @type {Handler} **/\r\nexport const handler = async (input) => {\r\n  console.log('Input received:', input);\r\n\r\n  return input;\r\n};"
+      },
+      "position": {
+        "x": 750,
+        "y": 113
+      }
+    },
+    {
+      "id": "031e6dc5-959b-4c10-9f2a-d2d39e1bb311",
+      "name": "CustomerValidation",
+      "type": "expressionNode",
+      "content": {
+        "inputField": null,
+        "outputPath": null,
+        "expressions": [
+          {
+            "id": "1704ca57-4ccd-4aa9-81a8-26cfc0ca41e3",
+            "key": "customerValidation.accountTypePassed",
+            "value": "customer.accountType==\"P\"?true:false"
+          },
+          {
+            "id": "b575df4d-f29e-4522-9e85-c73325a2a649",
+            "key": "customerValidation.isTenantPassed",
+            "value": "customer.isTenant"
+          }
+        ],
+        "passThrough": true,
+        "executionMode": "single"
+      },
+      "position": {
+        "x": 430,
+        "y": 161
+      }
+    },
+    {
+      "id": "c9c3f14a-45f7-4539-8b40-e7cbfa04190a",
+      "name": "transactionValidation",
+      "type": "expressionNode",
+      "content": {
+        "inputField": null,
+        "outputPath": null,
+        "expressions": [
+          {
+            "id": "1602c83c-3139-4095-a630-3a814e7a3adb",
+            "key": "transactionValidation.balanceValidationPassed",
+            "value": "transactionData.balanceAvailable!=0?true:false"
+          },
+          {
+            "id": "60be5885-e53a-47c2-8e0b-2e82c7f30392",
+            "key": "transactionValidation.creditBlockedPassed",
+            "value": "transactionData.creditBlocked"
+          }
+        ],
+        "passThrough": true,
+        "executionMode": "single"
+      },
+      "position": {
+        "x": 430,
+        "y": 257
+      }
+    },
+    {
+      "id": "69900a91-6267-4d61-94eb-0d5f5138b2a4",
+      "name": "Call Calidda Score",
+      "type": "functionNode",
+      "content": {
+        "source": "import http from 'http';\r\n\r\nexport const handler = async (input) => {\r\n    const apiUrl = 'https://api.calidda.com/creditscore'; \r\n    const subscriptionKey = 'tu-suscription-key'; \r\n\r\n    const simulatedResponse = {\r\n        score: Math.floor(Math.random() * (1000 - 300 + 1)) + 300\r\n    };\r\n\r\n    input.creditDecision = simulatedResponse;\r\n    console.log('Credit Score:', simulatedResponse);\r\n\r\n    return input;\r\n\r\n    /**const response = await http.post(apiUrl, {\r\n        headers: {\r\n            'Content-Type': 'application/json',\r\n            'Ocp-Apim-Subscription-Key': subscriptionKey\r\n        },\r\n        body: JSON.stringify(input) \r\n    });\r\n\r\n    return response.data; **/\r\n};\r\n"
+      },
+      "position": {
+        "x": 955,
+        "y": 265
+      }
+    },
+    {
+      "id": "56cbe1de-a20c-47a1-a762-77e57fa5b4cf",
+      "name": "CreditScoreDecision",
+      "type": "decisionTableNode",
+      "content": {
+        "rules": [
+          {
+            "_id": "6327486f-c231-4749-abe4-22fc889529ae",
+            "_description": "",
+            "1bea2a4a-c602-44e1-830e-16edb222458a": "36",
+            "5c9a917c-1898-4d46-94ae-883ae9cb6ac2": "> 10",
+            "7a33ceb5-b189-4804-855e-d9f59cbed149": "true",
+            "91b65e91-284c-4fac-8e42-cf86b8f01cb5": "[300..500]",
+            "98ae3570-cb52-4554-b6dd-66e0cc08658a": "[2000..6000]",
+            "c194df4b-04f4-4ee6-bd12-790b804649b5": "1800",
+            "d8aef9cd-6532-49e2-9481-5bf3d0089c89": "12"
+          },
+          {
+            "_id": "6001279e-562a-4209-a230-11e2b19f9c05",
+            "_description": "",
+            "1bea2a4a-c602-44e1-830e-16edb222458a": "30",
+            "5c9a917c-1898-4d46-94ae-883ae9cb6ac2": "> 10",
+            "7a33ceb5-b189-4804-855e-d9f59cbed149": "true",
+            "91b65e91-284c-4fac-8e42-cf86b8f01cb5": "[501..700]",
+            "98ae3570-cb52-4554-b6dd-66e0cc08658a": "[2000..6000]",
+            "c194df4b-04f4-4ee6-bd12-790b804649b5": "5000",
+            "d8aef9cd-6532-49e2-9481-5bf3d0089c89": "15"
+          },
+          {
+            "_id": "3945f355-71e9-46f9-8a4a-844f805f99f2",
+            "_description": "",
+            "1bea2a4a-c602-44e1-830e-16edb222458a": "30",
+            "5c9a917c-1898-4d46-94ae-883ae9cb6ac2": "> 10",
+            "7a33ceb5-b189-4804-855e-d9f59cbed149": "true",
+            "91b65e91-284c-4fac-8e42-cf86b8f01cb5": "[701..999]",
+            "98ae3570-cb52-4554-b6dd-66e0cc08658a": "[2000..8000]",
+            "c194df4b-04f4-4ee6-bd12-790b804649b5": "7000",
+            "d8aef9cd-6532-49e2-9481-5bf3d0089c89": "18"
+          }
+        ],
+        "inputs": [
+          {
+            "id": "91b65e91-284c-4fac-8e42-cf86b8f01cb5",
+            "name": "Score Calidda",
+            "field": "creditDecision.score"
+          },
+          {
+            "id": "98ae3570-cb52-4554-b6dd-66e0cc08658a",
+            "name": "loanAmountRequest",
+            "field": "transactionData.loanAmountRequested"
+          },
+          {
+            "id": "5c9a917c-1898-4d46-94ae-883ae9cb6ac2",
+            "name": "loanTermRequested",
+            "field": "transactionData.loanTerm"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "1bea2a4a-c602-44e1-830e-16edb222458a",
+            "name": "InteresRate",
+            "field": "creditDecision.interestRate"
+          },
+          {
+            "id": "d8aef9cd-6532-49e2-9481-5bf3d0089c89",
+            "name": "Installment",
+            "field": "creditDecision.installment"
+          },
+          {
+            "id": "c194df4b-04f4-4ee6-bd12-790b804649b5",
+            "name": "Amount",
+            "field": "creditDecision.amount"
+          },
+          {
+            "id": "7a33ceb5-b189-4804-855e-d9f59cbed149",
+            "name": "Approved",
+            "field": "creditDecision.approved"
+          }
+        ],
+        "hitPolicy": "first",
+        "inputField": null,
+        "outputPath": null,
+        "passThrough": true,
+        "executionMode": "single"
+      },
+      "position": {
+        "x": 1230,
+        "y": 275
+      }
+    },
+    {
+      "id": "fc29e14f-cb7f-47a8-9a51-c443a9bf1866",
+      "name": "Response Format",
+      "type": "functionNode",
+      "content": {
+        "source": "import zen from 'zen';\r\n\r\n/** @type {Handler} **/\r\nexport const handler = async (input) => {\r\n\r\n  let response = {\r\n    validations : {\r\n      customerValidation: {\r\n        ...input.customerValidation \r\n      },\r\n      transactionValidation: {\r\n        ...input.transactionValidation \r\n      },\r\n      historicalValidation: {\r\n        ...input.historicalValidation\r\n      }\r\n    },\r\n    creditDecision: {\r\n      dni : input.customer?.dni,\r\n      score : input.creditDecision?.score,\r\n      approved: input.creditDecision?.amount>0?true:false,\r\n      loanAmountRequest: input.transactionData?.loanAmountRequested,\r\n      interestRate: input.creditDecision?.interestRate,\r\n      installement: input.creditDecision?.installment,\r\n      ammountApproved: input.creditDecision?.amount\r\n    }\r\n  }\r\n  return response;\r\n};\r\n"
+      },
+      "position": {
+        "x": 1425,
+        "y": 95
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "2dcc1465-4888-44d7-af8b-6d0d0933c373",
+      "type": "edge",
+      "sourceId": "45eead3a-c85a-45ed-9ae1-80a528023afb",
+      "targetId": "ccf698d8-8d5b-4cdc-bc01-dea505b9d550"
+    },
+    {
+      "id": "d55a4d0c-db8b-43c6-a919-f6c9e2b1895e",
+      "type": "edge",
+      "sourceId": "45eead3a-c85a-45ed-9ae1-80a528023afb",
+      "targetId": "7c338b57-b390-4ca1-833e-76f418bbf53a"
+    },
+    {
+      "id": "7c4c0903-7f26-4e96-992b-e150497c9340",
+      "type": "edge",
+      "sourceId": "ccf698d8-8d5b-4cdc-bc01-dea505b9d550",
+      "targetId": "80a55cca-df93-471b-8149-78c7ceec77d3"
+    },
+    {
+      "id": "abd80ee2-2b7c-4e89-8862-e96570f02a1e",
+      "type": "edge",
+      "sourceId": "7c338b57-b390-4ca1-833e-76f418bbf53a",
+      "targetId": "80a55cca-df93-471b-8149-78c7ceec77d3"
+    },
+    {
+      "id": "23eef8e0-7fcb-495f-8b57-20ba7be39fc2",
+      "type": "edge",
+      "sourceId": "45eead3a-c85a-45ed-9ae1-80a528023afb",
+      "targetId": "031e6dc5-959b-4c10-9f2a-d2d39e1bb311"
+    },
+    {
+      "id": "23bc1a72-ab0c-45fc-bc96-cf23aeb1444b",
+      "type": "edge",
+      "sourceId": "031e6dc5-959b-4c10-9f2a-d2d39e1bb311",
+      "targetId": "80a55cca-df93-471b-8149-78c7ceec77d3"
+    },
+    {
+      "id": "70f790b1-80cf-4054-93e4-26be62e45f3e",
+      "type": "edge",
+      "sourceId": "45eead3a-c85a-45ed-9ae1-80a528023afb",
+      "targetId": "c9c3f14a-45f7-4539-8b40-e7cbfa04190a"
+    },
+    {
+      "id": "a6869e71-7772-49c4-ac5d-89e2bad10e58",
+      "type": "edge",
+      "sourceId": "c9c3f14a-45f7-4539-8b40-e7cbfa04190a",
+      "targetId": "80a55cca-df93-471b-8149-78c7ceec77d3"
+    },
+    {
+      "id": "ca13a3df-f8fd-4c8b-8086-9cdacc690c27",
+      "type": "edge",
+      "sourceId": "80a55cca-df93-471b-8149-78c7ceec77d3",
+      "targetId": "69900a91-6267-4d61-94eb-0d5f5138b2a4"
+    },
+    {
+      "id": "33780b59-a5dc-4bfe-8bf8-8c5ce728aa23",
+      "type": "edge",
+      "sourceId": "69900a91-6267-4d61-94eb-0d5f5138b2a4",
+      "targetId": "56cbe1de-a20c-47a1-a762-77e57fa5b4cf"
+    },
+    {
+      "id": "629429ca-b334-4032-88e7-f2b37cd2841c",
+      "type": "edge",
+      "sourceId": "56cbe1de-a20c-47a1-a762-77e57fa5b4cf",
+      "targetId": "fc29e14f-cb7f-47a8-9a51-c443a9bf1866"
+    },
+    {
+      "id": "ea9f00e3-38b0-48cf-985e-23b1573ee36f",
+      "type": "edge",
+      "sourceId": "fc29e14f-cb7f-47a8-9a51-c443a9bf1866",
+      "targetId": "32d5352b-d7f3-4768-bee9-923972690868"
+    }
+  ]
+}
