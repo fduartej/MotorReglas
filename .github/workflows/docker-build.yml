@@ -1,0 +1,33 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main # Cambia esto si tu rama principal tiene otro nombre
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Clonar el repositorio
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Iniciar sesión en Azure Container Registry
+      - name: Login to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.AZURE_ACR_SERVER }}
+          username: ${{ secrets.AZURE_ACR_USERNAME }}
+          password: ${{ secrets.AZURE_ACR_PASSWORD }}
+
+      # 3. Construir la imagen Docker
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.AZURE_ACR_SERVER }}/cn-ecomerce-frontend:latest .
+
+      # 4. Subir la imagen a Azure Container Registry
+      - name: Push Docker image
+        run: |
+          docker push <${{ secrets.AZURE_ACR_SERVER }}/cn-ecomerce-frontend:latest

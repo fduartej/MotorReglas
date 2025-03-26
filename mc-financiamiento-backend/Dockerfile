@@ -17,7 +17,7 @@ WORKDIR /app
 COPY --from=build /out .
 
 # Expone el puerto en el que la aplicación escucha (por defecto 80)
-EXPOSE 80
+EXPOSE 5000
 
 # Agrega un health check para verificar el estado del servicio
 #HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
