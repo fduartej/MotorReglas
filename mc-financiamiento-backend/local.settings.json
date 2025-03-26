@@ -16,7 +16,7 @@
     "NoSql.CosmosDb": "AccountEndpoint=https://cosmos-digital.documents.azure.com:443/;AccountKey=BsbdmauQWrmIOa8W3u8Gp604sO1x9kXKCSzWWl7zc5TPleTCDaeI2fdzHR6hHXhJ9IPYK7nIIombACDbVnnVQg==;"
   },
   "ConnectionStrings": {
-    "DefaultConnection": "DataSource=app.db;Cache=Shared"
+    "DefaultConnection": "DataSource=../app.db;Cache=Shared"
   },
   "OpenTelemetry": {
     "ServiceName": "mc-financiamiento-bancked"

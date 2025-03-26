@@ -5,7 +5,10 @@
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <!-- Cambiar la ubicación de bin y obj -->
+     <BaseOutputPath>bin/</BaseOutputPath>
+    <BaseIntermediateOutputPath>obj/</BaseIntermediateOutputPath>
+ </PropertyGroup>
 
   <ItemGroup>
     <!-- OpenTelemetry para Tracing, Logs y Métricas -->
