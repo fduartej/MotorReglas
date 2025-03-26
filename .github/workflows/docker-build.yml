@@ -30,4 +30,4 @@ jobs:
       # 4. Subir la imagen a Azure Container Registry
       - name: Push Docker image
         run: |
-          docker push <${{ secrets.AZURE_ACR_SERVER }}/cn-ecomerce-frontend:latest
+          docker push ${{ secrets.AZURE_ACR_SERVER }}/cn-ecomerce-frontend:latest
