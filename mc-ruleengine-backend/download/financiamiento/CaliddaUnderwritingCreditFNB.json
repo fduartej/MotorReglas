@@ -43,7 +43,7 @@
           {
             "id": "80d481e4-417e-4946-9d2c-3b0c03e71862",
             "name": "ValidationNSE",
-            "field": "customerValidation.nseCategoriaValidation"
+            "field": "customerValidation.nseCategoriaValidationPassed"
           }
         ],
         "hitPolicy": "first",
@@ -78,17 +78,17 @@
           {
             "id": "116a9f54-a478-48b7-8cbb-7cddc6b75b4f",
             "key": "historicalValidation.mesesDeHabilitadoGasPassed",
-            "value": "historicalPreCalculated.mesesDeHabilitadoGas!=0?true:false"
+            "value": "historicalPreCalculated.mesesDeHabilitadoGas>0?true:false"
           },
           {
             "id": "9d08ac23-99ed-4883-925c-2ee4796af68b",
             "key": "historicalValidation.numeroCortesGasPassed",
-            "value": "historicalPreCalculated.numeroCortesGas!=0?true:false"
+            "value": "historicalPreCalculated.numeroCortesGas==0?true:false"
           },
           {
             "id": "1c2bbbcc-0267-411c-b8ea-105d7f556d2d",
             "key": "historicalValidation.corteGasDurante12UltimoMesesPassed",
-            "value": "historicalPreCalculated.corteGasDurante12UltimoMeses!=0?true:false"
+            "value": "historicalPreCalculated.corteGasDurante12UltimoMeses==0?true:false"
           }
         ],
         "passThrough": true,
@@ -113,10 +113,10 @@
     },
     {
       "id": "80a55cca-df93-471b-8149-78c7ceec77d3",
-      "name": "Consolidacion",
+      "name": "EvaluaTodasLasReglas",
       "type": "functionNode",
       "content": {
-        "source": "import zen from 'zen';\r\n\r\n/** @type {Handler} **/\r\nexport const handler = async (input) => {\r\n  console.log('Input received:', input);\r\n\r\n  return input;\r\n};"
+        "source": "import zen from 'zen';\r\n\r\n/** @type {Handler} **/\r\nexport const handler = async (input) => {\r\n  console.log('Input received:', input);\r\n\r\n  // Función para validar todos los campos \"Passed\"\r\n  const allPassed = validateAllPassedFields(input);\r\n  \r\n  console.log('All Passed fields are true:', allPassed);\r\n  \r\n  return {\r\n    ...input,\r\n    allValidationsPassed: allPassed\r\n  };\r\n};\r\n\r\nfunction validateAllPassedFields(obj) {\r\n  // Recorre todas las propiedades del objeto\r\n  for (const key in obj) {\r\n    if (typeof obj[key] === 'object' && obj[key] !== null) {\r\n      // Si la propiedad es un objeto, recursivamente verifica sus propiedades\r\n      if (!validateAllPassedFields(obj[key])) {\r\n        return false;\r\n      }\r\n    } else if (key.endsWith('Passed')) {\r\n      // Si la propiedad termina en \"Passed\" y no es true, retorna false\r\n      if (obj[key] !== true) {\r\n        return false;\r\n      }\r\n    }\r\n  }\r\n  // Si todas las validaciones son true, retorna true\r\n  return true;\r\n}"
       },
       "position": {
         "x": 750,
@@ -139,7 +139,7 @@
           {
             "id": "b575df4d-f29e-4522-9e85-c73325a2a649",
             "key": "customerValidation.isTenantPassed",
-            "value": "customer.isTenant"
+            "value": "customer.isTenant==false?true:false"
           }
         ],
         "passThrough": true,
@@ -161,12 +161,12 @@
           {
             "id": "1602c83c-3139-4095-a630-3a814e7a3adb",
             "key": "transactionValidation.balanceValidationPassed",
-            "value": "transactionData.balanceAvailable!=0?true:false"
+            "value": "transactionData.balanceAvailable>0?true:false"
           },
           {
             "id": "60be5885-e53a-47c2-8e0b-2e82c7f30392",
             "key": "transactionValidation.creditBlockedPassed",
-            "value": "transactionData.creditBlocked"
+            "value": "transactionData.creditBlocked==false?true:false"
           }
         ],
         "passThrough": true,
@@ -185,8 +185,8 @@
         "source": "import http from 'http';\r\n\r\nexport const handler = async (input) => {\r\n    const apiUrl = 'https://api.calidda.com/creditscore'; \r\n    const subscriptionKey = 'tu-suscription-key'; \r\n\r\n    const simulatedResponse = {\r\n        score: Math.floor(Math.random() * (1000 - 300 + 1)) + 300\r\n    };\r\n\r\n    input.creditDecision = simulatedResponse;\r\n    console.log('Credit Score:', simulatedResponse);\r\n\r\n    return input;\r\n\r\n    /**const response = await http.post(apiUrl, {\r\n        headers: {\r\n            'Content-Type': 'application/json',\r\n            'Ocp-Apim-Subscription-Key': subscriptionKey\r\n        },\r\n        body: JSON.stringify(input) \r\n    });\r\n\r\n    return response.data; **/\r\n};\r\n"
       },
       "position": {
-        "x": 955,
-        "y": 265
+        "x": 1120,
+        "y": 315
       }
     },
     {
@@ -275,8 +275,8 @@
         "executionMode": "single"
       },
       "position": {
-        "x": 1230,
-        "y": 275
+        "x": 1390,
+        "y": 300
       }
     },
     {
@@ -284,11 +284,35 @@
       "name": "Response Format",
       "type": "functionNode",
       "content": {
-        "source": "import zen from 'zen';\r\n\r\n/** @type {Handler} **/\r\nexport const handler = async (input) => {\r\n\r\n  let response = {\r\n    validations : {\r\n      customerValidation: {\r\n        ...input.customerValidation \r\n      },\r\n      transactionValidation: {\r\n        ...input.transactionValidation \r\n      },\r\n      historicalValidation: {\r\n        ...input.historicalValidation\r\n      }\r\n    },\r\n    creditDecision: {\r\n      dni : input.customer?.dni,\r\n      score : input.creditDecision?.score,\r\n      approved: input.creditDecision?.amount>0?true:false,\r\n      loanAmountRequest: input.transactionData?.loanAmountRequested,\r\n      interestRate: input.creditDecision?.interestRate,\r\n      installement: input.creditDecision?.installment,\r\n      ammountApproved: input.creditDecision?.amount\r\n    }\r\n  }\r\n  return response;\r\n};\r\n"
+        "source": "import zen from 'zen';\r\n\r\n/** @type {Handler} **/\r\nexport const handler = async (input) => {\r\n\r\n  let response = {\r\n    validations : {\r\n      customerValidation: {\r\n        ...input.customerValidation \r\n      },\r\n      transactionValidation: {\r\n        ...input.transactionValidation \r\n      },\r\n      historicalValidation: {\r\n        ...input.historicalValidation\r\n      }\r\n    },\r\n    creditDecision: {\r\n      pasoTodasLasReglas : input.allValidationsPassed,\r\n      dni : input.customer?.dni,\r\n      score : input.creditDecision?.score,\r\n      approved: input.creditDecision?.amount>0?true:false,\r\n      loanAmountRequest: input.transactionData?.loanAmountRequested,\r\n      interestRate: input.creditDecision?.interestRate,\r\n      installement: input.creditDecision?.installment,\r\n      ammountApproved: input.creditDecision?.amount\r\n    }\r\n  }\r\n  return response;\r\n};\r\n"
       },
       "position": {
         "x": 1425,
         "y": 95
+      }
+    },
+    {
+      "id": "c33b27ca-ffca-4345-adcf-884136136997",
+      "name": "PasaronTodas",
+      "type": "switchNode",
+      "content": {
+        "hitPolicy": "first",
+        "statements": [
+          {
+            "id": "c5fb5a75-190a-45c3-8c94-68002041cc00",
+            "condition": "!allValidationsPassed",
+            "isDefault": false
+          },
+          {
+            "id": "d643ce81-4572-4ca6-8c18-4e9acda5d80a",
+            "condition": "",
+            "isDefault": true
+          }
+        ]
+      },
+      "position": {
+        "x": 1050,
+        "y": 60
       }
     }
   ],
@@ -342,12 +366,6 @@
       "targetId": "80a55cca-df93-471b-8149-78c7ceec77d3"
     },
     {
-      "id": "ca13a3df-f8fd-4c8b-8086-9cdacc690c27",
-      "type": "edge",
-      "sourceId": "80a55cca-df93-471b-8149-78c7ceec77d3",
-      "targetId": "69900a91-6267-4d61-94eb-0d5f5138b2a4"
-    },
-    {
       "id": "33780b59-a5dc-4bfe-8bf8-8c5ce728aa23",
       "type": "edge",
       "sourceId": "69900a91-6267-4d61-94eb-0d5f5138b2a4",
@@ -364,6 +382,26 @@
       "type": "edge",
       "sourceId": "fc29e14f-cb7f-47a8-9a51-c443a9bf1866",
       "targetId": "32d5352b-d7f3-4768-bee9-923972690868"
+    },
+    {
+      "id": "65495241-cb2e-4b8e-9a83-62bbb04ee2f7",
+      "type": "edge",
+      "sourceId": "80a55cca-df93-471b-8149-78c7ceec77d3",
+      "targetId": "c33b27ca-ffca-4345-adcf-884136136997"
+    },
+    {
+      "id": "daf4b38c-0443-408c-a233-ad33153e9106",
+      "type": "edge",
+      "sourceId": "c33b27ca-ffca-4345-adcf-884136136997",
+      "targetId": "fc29e14f-cb7f-47a8-9a51-c443a9bf1866",
+      "sourceHandle": "c5fb5a75-190a-45c3-8c94-68002041cc00"
+    },
+    {
+      "id": "d2ebaa7c-5d85-4d1d-b482-ae6b1e45d62c",
+      "type": "edge",
+      "sourceId": "c33b27ca-ffca-4345-adcf-884136136997",
+      "targetId": "69900a91-6267-4d61-94eb-0d5f5138b2a4",
+      "sourceHandle": "d643ce81-4572-4ca6-8c18-4e9acda5d80a"
     }
   ]
 }

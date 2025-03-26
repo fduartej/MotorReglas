@@ -11,7 +11,7 @@ const Header: React.FC = () => {
   return (
     <header style={styles.header}>
       <Link href="/">
-        <a style={styles.logo}>Tienda Virtual</a>
+        <a style={styles.logo}>Calidda - Tienda Virtual</a>
       </Link>
       <Link href="/cart">
         <a style={styles.cartButton}>🛒 Carrito ({totalItems})</a>

@@ -33,7 +33,18 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, title }) => {
               >
                 {key}
               </td>
-              <td style={{ padding: "8px", textAlign: "left" }}>
+              <td
+                style={{
+                  padding: "8px",
+                  textAlign: "left",
+                  color:
+                    value === true
+                      ? "blue"
+                      : value === false
+                      ? "red"
+                      : "inherit", // Estilo condicional
+                }}
+              >
                 {value === null ? (
                   "-" // Mostrar "-" si el valor es null
                 ) : typeof value === "object" && value !== null ? (
