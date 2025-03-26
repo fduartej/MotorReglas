@@ -7,7 +7,7 @@ COPY mc.csproj ./
 RUN dotnet restore
 
 # Publica la aplicación en modo Release
-RUN dotnet publish -c Release -o /out $(ls *.csproj)
+RUN dotnet publish -c Release -o /out
 
 # Usa la imagen base de .NET 8.0 para ejecución
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
@@ -24,4 +24,4 @@ EXPOSE 5000
 #    CMD curl --fail http://localhost/health || exit 1
 
 # Configura el punto de entrada para ejecutar la aplicación
-ENTRYPOINT ["dotnet", "$(ls *.dll)"]
+ENTRYPOINT ["dotnet", "mc.dll"]
