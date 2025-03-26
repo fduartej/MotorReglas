@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 3001
 
 # Comando para iniciar la aplicación
-CMD ["node", "index.js"]
+CMD ["node", "app.js"]
