@@ -25,7 +25,7 @@ jobs:
       # 3. Construir la imagen Docker
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.AZURE_ACR_SERVER }}/cn-ecomerce-frontend:latest .
+          docker build -t ${{ secrets.AZURE_ACR_SERVER }}/cn-ecomerce-frontend:latest ./cn-ecomerce-frontend
 
       # 4. Subir la imagen a Azure Container Registry
       - name: Push Docker image
