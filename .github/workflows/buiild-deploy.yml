@@ -49,6 +49,7 @@ jobs:
         run: |
           kubectl apply -f ./cn-ecomerce-frontend/k8s/deployment.yaml
           kubectl apply -f ./cn-ecomerce-frontend/k8s/service.yaml
+          kubectl apply -f ./cn-ecomerce-frontend/k8s/ingress.yaml
 
   # Job para el backend
   build-push-deploy-backend-financiamiento:
@@ -93,6 +94,7 @@ jobs:
         run: |
           kubectl apply -f ./cn-ecomerce-frontend/k8s/deployment.yaml
           kubectl apply -f ./cn-ecomerce-frontend/k8s/service.yaml
+          kubectl apply -f ./cn-ecomerce-frontend/k8s/ingress.yaml
 
   # Job para el backend
   build-push-deploy-backend-ruleengine:
@@ -137,3 +139,4 @@ jobs:
         run: |
           kubectl apply -f ./mc-ruleengine-backend/k8s/deployment.yaml
           kubectl apply -f ./mc-ruleengine-backend/k8s/service.yaml
+          kubectl apply -f ./mc-ruleengine-backend/k8s/ingress.yaml
