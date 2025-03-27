@@ -135,5 +135,5 @@ jobs:
       # 7. Desplegar en AKS
       - name: Deploy frontend to AKS
         run: |
-          kubectl apply -f ./mc-financiamiento-backend/k8s/deployment.yaml
-          kubectl apply -f ./mc-financiamiento-backend/k8s/service.yaml
+          kubectl apply -f ./mc-ruleengine-backend/k8s/deployment.yaml
+          kubectl apply -f ./mc-ruleengine-backend/k8s/service.yaml
