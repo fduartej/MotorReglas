@@ -17,8 +17,11 @@ WORKDIR /app
 # Copia los archivos publicados desde la etapa de compilación
 COPY --from=build /out .
 
+# Copia el archivo local.settings.json al contenedor
+COPY local.settings.json ./local.settings.json
+
 # Expone el puerto en el que la aplicación escucha
-EXPOSE 5000
+EXPOSE 8080
 
 # Configura el punto de entrada para ejecutar la aplicación
 ENTRYPOINT ["dotnet", "mc.dll"]
