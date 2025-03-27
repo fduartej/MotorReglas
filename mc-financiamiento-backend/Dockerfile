@@ -6,7 +6,8 @@ WORKDIR /app
 COPY mc.csproj ./
 RUN dotnet restore
 
-# Publica la aplicación en modo Release
+# Copia el resto del código fuente y publica la aplicación en modo Release
+COPY . ./
 RUN dotnet publish -c Release -o /out
 
 # Usa la imagen base de .NET 8.0 para ejecución
@@ -16,12 +17,8 @@ WORKDIR /app
 # Copia los archivos publicados desde la etapa de compilación
 COPY --from=build /out .
 
-# Expone el puerto en el que la aplicación escucha (por defecto 80)
+# Expone el puerto en el que la aplicación escucha
 EXPOSE 5000
-
-# Agrega un health check para verificar el estado del servicio
-#HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-#    CMD curl --fail http://localhost/health || exit 1
 
 # Configura el punto de entrada para ejecutar la aplicación
 ENTRYPOINT ["dotnet", "mc.dll"]
