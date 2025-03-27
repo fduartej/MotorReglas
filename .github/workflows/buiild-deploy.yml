@@ -33,15 +33,18 @@ jobs:
         run: |
           docker push ${{ secrets.AZURE_ACR_SERVER }}/cn-ecomerce-frontend:latest
 
-      # 5. Configurar acceso al clúster de AKS
-      - name: Set up AKS credentials
-        uses: azure/aks-set-context@v2
+      # 5. Autenticarse en Azure
+      - name: Login to Azure
+        uses: azure/login@v1
         with:
-          resource-group: ${{ secrets.AZURE_RESOURCE_GROUP }}
-          cluster-name: ${{ secrets.AZURE_AKS_CLUSTER }}
-          credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 6. Desplegar en AKS
+      # 6. Configurar acceso al clúster de AKS
+      - name: Set up AKS context
+        run: |
+          az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --name ${{ secrets.AZURE_AKS_CLUSTER }} --overwrite-existing
+
+      # 7. Desplegar en AKS
       - name: Deploy frontend to AKS
         run: |
           kubectl apply -f ./cn-ecomerce-frontend/k8s/deployment.yaml
@@ -74,19 +77,22 @@ jobs:
         run: |
           docker push ${{ secrets.AZURE_ACR_SERVER }}/mc-financiamiento-backend:latest
 
-      # 5. Configurar acceso al clúster de AKS
-      - name: Set up AKS credentials
-        uses: azure/aks-set-context@v2
+      # 5. Autenticarse en Azure
+      - name: Login to Azure
+        uses: azure/login@v1
         with:
-          resource-group: ${{ secrets.AZURE_RESOURCE_GROUP }}
-          cluster-name: ${{ secrets.AZURE_AKS_CLUSTER }}
-          credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 6. Desplegar en AKS
+      # 6. Configurar acceso al clúster de AKS
+      - name: Set up AKS context
+        run: |
+          az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --name ${{ secrets.AZURE_AKS_CLUSTER }} --overwrite-existing
+
+      # 7. Desplegar en AKS
       - name: Deploy frontend to AKS
         run: |
-          kubectl apply -f ./mc-financiamiento-backend/k8s/deployment.yaml
-          kubectl apply -f ./mc-financiamiento-backend/k8s/service.yaml
+          kubectl apply -f ./cn-ecomerce-frontend/k8s/deployment.yaml
+          kubectl apply -f ./cn-ecomerce-frontend/k8s/service.yaml
 
   # Job para el backend
   build-push-deploy-backend-ruleengine:
@@ -115,15 +121,18 @@ jobs:
         run: |
           docker push ${{ secrets.AZURE_ACR_SERVER }}/mc-ruleengine-backend:latest
 
-      # 5. Configurar acceso al clúster de AKS
-      - name: Set up AKS credentials
-        uses: azure/aks-set-context@v2
+      # 5. Autenticarse en Azure
+      - name: Login to Azure
+        uses: azure/login@v1
         with:
-          resource-group: ${{ secrets.AZURE_RESOURCE_GROUP }}
-          cluster-name: ${{ secrets.AZURE_AKS_CLUSTER }}
-          credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 6. Desplegar en AKS
+      # 6. Configurar acceso al clúster de AKS
+      - name: Set up AKS context
+        run: |
+          az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --name ${{ secrets.AZURE_AKS_CLUSTER }} --overwrite-existing
+
+      # 7. Desplegar en AKS
       - name: Deploy frontend to AKS
         run: |
           kubectl apply -f ./mc-financiamiento-backend/k8s/deployment.yaml
