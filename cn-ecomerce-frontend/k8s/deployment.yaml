@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cn-ecomerce-frontend
+  labels:
+    app: cn-ecomerce-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cn-ecomerce-frontend
+  template:
+    metadata:
+      labels:
+        app: cn-ecomerce-frontend
+    spec:
+      containers:
+        - name: cn-ecomerce-frontend
+          image: acrdemos123.azurecr.io/cn-ecomerce-frontend:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
