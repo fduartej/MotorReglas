@@ -42,6 +42,17 @@ Content-Type: application/json
   "LoanTerm":12
 }
 
+POST http://localhost:5000/loan/40382034/evaluation HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "LoanAmountRequested":3000,
+  "LoanTerm":12
+}
+
+
+
 GET https://financiamiento.gorules.io/api/projects/2f62702a-54e1-43cb-a525-173da371a016/releases/78649bab-5991-4535-847b-97790d113c33/download HTTP/1.1
 Accept: application/zip
 Authorization: Bearer grl_pat_cpJ0_ScP-y9SGsGZA59IrSm-QUOQGVIRDy8f4BfmyA7VsqSz

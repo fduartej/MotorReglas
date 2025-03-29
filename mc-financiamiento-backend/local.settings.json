@@ -7,7 +7,7 @@
     }
   },
   "Integration": {
-    "GoRules.Endpoint.001": "http://localhost:3001/engine/execute",
+    "GoRules.Endpoint.001": "http://mc-ruleengine-backend.contoso.com/engine/execute",
     "GoRules.Endpoint.002": "https://financiamiento.gorules.io/api/projects/demo/evaluate/caliddaunderwritingcredit-fnb",
     "GoRules.Endpoint.001.X-Access-Token-value": "dAG920pF3K3XQ8qQOvATPIun",
     "GoRules.Endpoint.001.X-Access-Token-Key": "X-Access-Token"
