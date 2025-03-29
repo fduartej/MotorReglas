@@ -93,7 +93,7 @@ jobs:
       - name: Deploy frontend to AKS
         run: |
           kubectl apply -f ./mc-financiamiento-backend/k8s/deployment.yaml
-          kubectl apply -f ./cmc-financiamiento-backend/k8s/service.yaml
+          kubectl apply -f ./mc-financiamiento-backend/k8s/service.yaml
           kubectl apply -f ./mc-financiamiento-backend/k8s/ingress.yaml
 
   # Job para el backend
