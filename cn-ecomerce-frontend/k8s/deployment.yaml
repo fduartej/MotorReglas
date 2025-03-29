@@ -17,6 +17,7 @@ spec:
       containers:
         - name: cn-ecomerce-frontend
           image: acrdemos123.azurecr.io/cn-ecomerce-frontend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
           env:

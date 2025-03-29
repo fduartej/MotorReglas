@@ -17,6 +17,7 @@ spec:
       containers:
         - name: mc-ruleengine-backend
           image: acrdemos123.azurecr.io/mc-ruleengine-backend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 3001
           env:

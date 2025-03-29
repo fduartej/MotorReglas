@@ -17,6 +17,7 @@ spec:
       containers:
         - name: mc-financiamiento-backend
           image: acrdemos123.azurecr.io/mc-financiamiento-backend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:
