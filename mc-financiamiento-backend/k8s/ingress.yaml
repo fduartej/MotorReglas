@@ -5,6 +5,7 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
+  ingressClassName: nginx
   rules:
     - host: mc-financiamiento-backend.contoso.com # Cambia esto por tu dominio
       http:
