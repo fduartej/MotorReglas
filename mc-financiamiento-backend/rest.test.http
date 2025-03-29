@@ -25,6 +25,9 @@ X-Access-Token: dAG920pF3K3XQ8qQOvATPIun
   }
 }
 
+GET http://localhost:5000/health HTTP/1.1
+Accept: application/json
+
 POST http://localhost:5000/loan/40382034/evaluation HTTP/1.1
 Accept: application/json
 Content-Type: application/json

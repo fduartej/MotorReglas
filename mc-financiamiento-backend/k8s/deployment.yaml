@@ -18,7 +18,7 @@ spec:
         - name: mc-financiamiento-backend
           image: acrdemos123.azurecr.io/mc-financiamiento-backend:latest
           ports:
-            - containerPort: 5000
+            - containerPort: 8080
           env:
             - name: ASPNETCORE_ENVIRONMENT
               value: "Production"

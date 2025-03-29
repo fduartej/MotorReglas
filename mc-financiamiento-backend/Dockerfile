@@ -19,6 +19,7 @@ COPY --from=build /out .
 
 # Copia el archivo local.settings.json al contenedor
 COPY local.settings.json ./local.settings.json
+COPY app.db ./app.db
 
 # Expone el puerto en el que la aplicación escucha
 EXPOSE 8080
