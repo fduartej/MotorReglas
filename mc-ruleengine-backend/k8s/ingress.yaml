@@ -9,7 +9,7 @@ spec:
     - host: mc-ruleengine-backend.contoso.com # Cambia esto por tu dominio
       http:
         paths:
-          - path: /
+          - path: /mc-ruleengine-backend
             pathType: Prefix
             backend:
               service:
