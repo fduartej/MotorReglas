@@ -28,7 +28,12 @@ X-Access-Token: dAG920pF3K3XQ8qQOvATPIun
 GET http://localhost:5000/health HTTP/1.1
 Accept: application/json
 
-POST http://localhost:5000/loan/40382034/evaluation HTTP/1.1
+GET http://apim-demo-student-01.azure-api.net/mc-financiamiento/health HTTP/1.1
+
+GET http://apim-demo-student-01.azure-api.net/mc-financiamiento/v1/health HTTP/1.1
+
+
+POST http://apim-demo-student-01.azure-api.net/mc-financiamiento/loan/40382034/evaluation HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 
