@@ -127,18 +127,22 @@ public class HttpDatasetExecutor
             request.Content = new StringContent(body, Encoding.UTF8, "application/json");
         }
 
-        // Set timeout if specified
-        if (httpConfig.TimeoutMs.HasValue)
-        {
-            _httpClient.Timeout = TimeSpan.FromMilliseconds(httpConfig.TimeoutMs.Value);
-        }
-
+        // Manejar timeout por request usando CancellationTokenSource
         _logger.LogDebug("Executing HTTP request: {Method} {Url}", httpConfig.Method, url);
 
-        var response = await _httpClient.SendAsync(request);
-        response.EnsureSuccessStatusCode();
-
-        return await response.Content.ReadAsStringAsync();
+        if (httpConfig.TimeoutMs.HasValue)
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(httpConfig.TimeoutMs.Value));
+            var response = await _httpClient.SendAsync(request, cts.Token);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync();
+        }
+        else
+        {
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync();
+        }
     }
 
     private object ProcessHttpResponse(string responseContent, DatasetConfig dataset)
