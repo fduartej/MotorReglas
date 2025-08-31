@@ -9,6 +9,7 @@ using Orchestrator.Features.TemplateRendering.Rendering;
 using Orchestrator.Features.TemplateRendering.Validation;
 using Orchestrator.Features.Monitoring.Tracing;
 using Orchestrator.Infrastructure.Cache;
+using Orchestrator.Infrastructure.Database;
 using Polly;
 using Polly.Extensions.Http;
 using StackExchange.Redis;
@@ -83,17 +84,7 @@ public static class Extensions
         });
         
         // Database connections
-        services.AddScoped<IDbConnection>(provider =>
-        {
-            var connectionString = configuration.GetConnectionString("primary") ?? throw new InvalidOperationException("Primary connection string not found");
-            return new NpgsqlConnection(connectionString);
-        });
-        
-        services.AddKeyedScoped<IDbConnection>("audit", (provider, key) =>
-        {
-            var connectionString = configuration.GetConnectionString("audit") ?? throw new InvalidOperationException("Audit connection string not found");
-            return new NpgsqlConnection(connectionString);
-        });
+        services.AddScoped<IConnectionFactory, ConnectionFactory>();
         
         // HTTP Client with basic configuration
         // Note: Polly retry policies are configured per dataset in flow configuration

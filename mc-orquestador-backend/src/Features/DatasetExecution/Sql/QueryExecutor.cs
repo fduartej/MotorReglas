@@ -2,28 +2,34 @@ using Dapper;
 using System.Data;
 using System.Text;
 using Orchestrator;
+using Orchestrator.Infrastructure.Database;
 
 namespace Orchestrator.Features.DatasetExecution.Sql;
 
 public class QueryExecutor
 {
-    private readonly IDbConnection _connection;
+    private readonly IConnectionFactory _connectionFactory;
     private readonly ILogger<QueryExecutor> _logger;
 
-    public QueryExecutor(IDbConnection connection, ILogger<QueryExecutor> logger)
+    public QueryExecutor(IConnectionFactory connectionFactory, ILogger<QueryExecutor> logger)
     {
-        _connection = connection;
+        _connectionFactory = connectionFactory;
         _logger = logger;
     }
 
     public async Task<object> ExecuteDatasetAsync(DatasetConfig dataset, Dictionary<string, object> inputs)
     {
+        return await ExecuteDatasetAsync(dataset, inputs, "primary");
+    }
+
+    public async Task<object> ExecuteDatasetAsync(DatasetConfig dataset, Dictionary<string, object> inputs, string connectionName)
+    {
         try
         {
             return dataset.Type.ToLower() switch
             {
-                "sql" => await ExecuteSqlDatasetAsync(dataset, inputs),
-                "rawsql" => await ExecuteRawSqlDatasetAsync(dataset, inputs),
+                "sql" => await ExecuteSqlDatasetAsync(dataset, inputs, connectionName),
+                "rawsql" => await ExecuteRawSqlDatasetAsync(dataset, inputs, connectionName),
                 _ => throw new ArgumentException($"Unsupported dataset type: {dataset.Type}")
             };
         }
@@ -34,25 +40,27 @@ public class QueryExecutor
         }
     }
 
-    private async Task<object> ExecuteSqlDatasetAsync(DatasetConfig dataset, Dictionary<string, object> inputs)
+    private async Task<object> ExecuteSqlDatasetAsync(DatasetConfig dataset, Dictionary<string, object> inputs, string connectionName)
     {
         var (sql, parameters) = BuildSqlQuery(dataset, inputs);
         
         _logger.LogDebug("Executing SQL: {Sql} with parameters: {@Parameters}", sql, parameters);
 
+        using var connection = _connectionFactory.CreateConnection(connectionName);
+        
         if (dataset.Result.Mode.ToLower() == "single")
         {
-            var result = await _connection.QueryFirstOrDefaultAsync(sql, parameters);
+            var result = await connection.QueryFirstOrDefaultAsync(sql, parameters);
             return result ?? new object();
         }
         else
         {
-            var results = await _connection.QueryAsync(sql, parameters);
+            var results = await connection.QueryAsync(sql, parameters);
             return results.ToList();
         }
     }
 
-    private async Task<object> ExecuteRawSqlDatasetAsync(DatasetConfig dataset, Dictionary<string, object> inputs)
+    private async Task<object> ExecuteRawSqlDatasetAsync(DatasetConfig dataset, Dictionary<string, object> inputs, string connectionName)
     {
         if (string.IsNullOrEmpty(dataset.Sql))
             throw new ArgumentException("Raw SQL dataset requires Sql property");
@@ -72,14 +80,16 @@ public class QueryExecutor
 
         _logger.LogDebug("Executing Raw SQL: {Sql} with parameters: {@Parameters}", sql, parameters);
 
+        using var connection = _connectionFactory.CreateConnection(connectionName);
+
         if (dataset.Result.Mode.ToLower() == "single")
         {
-            var result = await _connection.QueryFirstOrDefaultAsync(sql, parameters);
+            var result = await connection.QueryFirstOrDefaultAsync(sql, parameters);
             return result ?? new object();
         }
         else
         {
-            var results = await _connection.QueryAsync(sql, parameters);
+            var results = await connection.QueryAsync(sql, parameters);
             return results.ToList();
         }
     }

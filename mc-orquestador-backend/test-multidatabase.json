@@ -1,0 +1,58 @@
+{
+  "name": "MultiDatabaseTest",
+  "description": "Test flow to demonstrate multi-database support",
+  "datasets": [
+    {
+      "name": "postgresTest",
+      "type": "rawSQL",
+      "sql": "SELECT 'PostgreSQL' as provider, current_database() as database_name, version() as version_info",
+      "result": {
+        "mode": "multiple"
+      }
+    },
+    {
+      "name": "sqlServerTest",
+      "type": "rawSQL",
+      "sql": "SELECT 'SQL Server' as provider, DB_NAME() as database_name, @@VERSION as version_info",
+      "result": {
+        "mode": "multiple"
+      },
+      "connectionName": "sqlserver"
+    },
+    {
+      "name": "azureSqlTest",
+      "type": "rawSQL",
+      "sql": "SELECT 'Azure SQL' as provider, DB_NAME() as database_name, @@VERSION as version_info",
+      "result": {
+        "mode": "multiple"
+      },
+      "connectionName": "azuresql"
+    },
+    {
+      "name": "sqliteTest",
+      "type": "rawSQL",
+      "sql": "SELECT 'SQLite' as provider, 'test' as database_name, sqlite_version() as version_info",
+      "result": {
+        "mode": "multiple"
+      },
+      "connectionName": "sqlite"
+    }
+  ],
+  "postProcessing": {
+    "template": "multidatabase-response",
+    "endpoints": [
+      {
+        "name": "logResults",
+        "url": "https://httpbin.org/post",
+        "method": "POST",
+        "body": {
+          "postgres": "{{postgresTest}}",
+          "sqlserver": "{{sqlServerTest}}",
+          "azuresql": "{{azureSqlTest}}",
+          "sqlite": "{{sqliteTest}}"
+        },
+        "condition": "always"
+      }
+    ]
+  }
+}
