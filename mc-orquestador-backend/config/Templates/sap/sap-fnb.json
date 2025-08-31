@@ -1,0 +1,29 @@
+{
+  "_meta": { "required": ["cliente.nombre", "transaccionId"] },
+
+  "Solicitud": {
+    "Cliente": {
+      "Nombre": "{{ cliente.nombre }}",
+      "Email": "{{ cliente.email }}",
+      "Score": "{{ score.valor }}"
+    },
+    "Cuentas": [
+      {{ for c in cuentas -}}
+      {
+        "Numero": "{{ c.numeroCuenta }}",
+        "Tipo": "{{ c.tipoCuenta }}",
+        "Saldo": "{{ c.saldoActual }}",
+        "Producto": "{{ c.nombreProducto }}",
+        "Categoria": "{{ c.categoriaProducto }}",
+        "Sucursal": { "Codigo": "{{ c.codigoSucursal }}", "Nombre": "{{ c.nombreSucursal }}" }
+      }{{ if !for.last }},{{ end }}
+      {{- end }}
+    ],
+    "Deudas": [
+      {{ for d in deudas -}}
+      { "Id": "{{ d.id }}", "Monto": "{{ d.monto }}", "Estado": "{{ d.estado }}" }{{ if !for.last }},{{ end }}
+      {{- end }}
+    ],
+    "TransaccionId": "{{ transaccionId }}"
+  }
+}

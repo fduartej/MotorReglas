@@ -1,0 +1,17 @@
+{
+  "_meta": { "required": ["cliente.nombre", "transaccionId"] },
+
+  "MotorDecisionPremium": {
+    "Cliente": {
+      "Nombre": "{{ cliente.nombre }}",
+      "Score": "{{ score.valor }}",
+      "Categoria": "PREMIUM"
+    },
+    "Resumen": {
+      "CuentasActivas": "{{ cuentas.size }}",
+      "SaldoTotal": "{{ cuentas[0].saldoActual }}"
+    },
+    "Decision": "APROBADO_PREMIUM",
+    "TransaccionId": "{{ transaccionId }}"
+  }
+}

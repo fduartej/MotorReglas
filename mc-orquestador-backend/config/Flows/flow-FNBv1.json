@@ -1,0 +1,615 @@
+{
+  "name": "FlowFNBv1",
+  "version": "1.1.0",
+  "inputs": ["dni", "cuentaContrato", "canal", "transaccionId", "pais"],
+
+  "settings": {
+    "failFast": false,
+    "timezone": "America/Lima"
+  },
+
+  "datasets": [
+    {
+      "name": "qCliente",
+      "type": "sql",
+      "database": "primary",
+      "from": "clientes as c",
+      "select": ["c.email as emailCliente"],
+      "selectDerived": ["CONCAT(c.nombre,' ',c.apellido) as nombreCompleto"],
+      "joins": [
+        {
+          "type": "leftJoin",
+          "table": "direcciones as d",
+          "on": "c.id = d.cliente_id"
+        },
+        {
+          "type": "leftJoin",
+          "table": "ciudades as ciu",
+          "on": "d.ciudad_id = ciu.id"
+        },
+        {
+          "type": "leftJoin",
+          "table": "provincias as p",
+          "on": "ciu.provincia_id = p.id"
+        }
+      ],
+      "where": [
+        { "field": "c.dni", "op": "=", "valueFrom": "dni" },
+        { "field": "d.tipo", "op": "=", "value": "principal" }
+      ],
+      "orderBy": ["c.id asc"],
+      "result": { "mode": "single" },
+      "cache": { "enabled": true, "ttlSec": 1800, "key": "cliente:{dni}" }
+    },
+
+    {
+      "name": "qCuentas",
+      "type": "sql",
+      "database": "primary",
+      "from": "cuentas as c",
+      "select": [
+        "c.numero_cuenta as numeroCuenta",
+        "c.tipo_cuenta as tipoCuenta",
+        "c.saldo_actual as saldoActual",
+        "p.nombre as nombreProducto",
+        "cat.nombre as categoriaProducto",
+        "s.codigo as codigoSucursal",
+        "s.nombre as nombreSucursal"
+      ],
+      "joins": [
+        {
+          "type": "innerJoin",
+          "table": "productos as p",
+          "on": "c.producto_id = p.id"
+        },
+        {
+          "type": "leftJoin",
+          "table": "categorias_producto as cat",
+          "on": "p.categoria_id = cat.id"
+        },
+        {
+          "type": "innerJoin",
+          "table": "sucursales as s",
+          "on": "c.sucursal_id = s.id"
+        }
+      ],
+      "where": [
+        { "field": "c.dni", "op": "=", "valueFrom": "dni" },
+        { "field": "c.estado", "op": "in", "value": ["activa", "preferente"] }
+      ],
+      "orderBy": ["c.fecha_apertura desc"],
+      "limit": 10,
+      "result": { "mode": "array" },
+      "cache": { "enabled": true, "ttlSec": 900, "key": "cuentas:{dni}" }
+    },
+
+    {
+      "name": "rawDeudas",
+      "type": "rawSql",
+      "database": "primary",
+      "sql": "SELECT d.id, d.monto, d.estado, d.fecha FROM deudas d WHERE d.dni = @dni AND d.estado IN ('PEND','VENC') ORDER BY d.fecha DESC",
+      "params": { "dni": "{dni}" },
+      "result": { "mode": "array" },
+      "cache": { "enabled": true, "ttlSec": 300, "key": "deudas:{dni}" }
+    },
+
+    {
+      "name": "apiScore",
+      "type": "http",
+      "http": {
+        "method": "GET",
+        "url": "https://risk.example.com/score?dni={{dni}}&country={{pais}}",
+        "headers": {
+          "x-api-key": "{{ENV.RISK_API_KEY}}",
+          "accept": "application/json"
+        },
+        "timeoutMs": 1500,
+        "retry": { "maxAttempts": 2, "backoffMs": 200 },
+        "resultPath": "$"
+      },
+      "result": { "mode": "single" },
+      "extract": {
+        "valor": "data.score",
+        "banderaFraude": "data.flags.fraud",
+        "modeloVersion": "meta.modelVersion"
+      },
+      "cache": { "enabled": true, "ttlSec": 600, "key": "score:{dni}:{pais}" },
+      "onFailure": {
+        "enabled": true,
+        "fallbackType": "rawSQL",
+        "fallbackConfig": {
+          "sql": "SELECT score as valor, flags_fraud as banderaFraude, model_version as modeloVersion FROM scores WHERE dni = @dni AND country = @pais ORDER BY updated_at DESC LIMIT 1"
+        }
+      }
+    },
+
+    {
+      "name": "apiProductosActivos",
+      "type": "http",
+      "http": {
+        "method": "GET",
+        "url": "https://catalog.example.com/customers/{{dni}}/products",
+        "headers": { "authorization": "Bearer {{ENV.CATALOG_TOKEN}}" },
+        "timeoutMs": 2000,
+        "resultPath": "items"
+      },
+      "result": { "mode": "array" },
+      "resultPaths": [
+        { "as": "primeraCategoria", "path": "0.category" },
+        { "as": "cantidadProductos", "path": "length" }
+      ],
+      "cache": { "enabled": true, "ttlSec": 300, "key": "productos:{dni}" },
+      "onFailure": {
+        "enabled": true,
+        "fallbackType": "rawSQL",
+        "fallbackConfig": {
+          "sql": "SELECT category as primeraCategoria, COUNT(*) as cantidadProductos FROM productos WHERE dni = @dni GROUP BY category ORDER BY cantidadProductos DESC LIMIT 1"
+        }
+      }
+    }
+  ],
+
+  "collections": {
+    "cuentas": { "from": "qCuentas" },
+    "deudas": { "from": "rawDeudas" },
+    "productos": { "from": "apiProductosActivos" }
+  },
+
+  "mapping": {
+    "cliente.nombre": "qCliente.nombreCompleto",
+    "cliente.email": "qCliente.emailCliente",
+    "score.valor": "apiScore.valor",
+    "score.fraude": "apiScore.banderaFraude",
+    "score.modeloVersion": "apiScore.modeloVersion",
+    "productos.primeraCategoria": "apiProductosActivos.primeraCategoria",
+    "productos.cantidad": "apiProductosActivos.cantidadProductos",
+    "cuentaPrincipal.numero": "qCuentas.0.numeroCuenta",
+    "cuentaPrincipal.tipo": "qCuentas.0.tipoCuenta",
+    "cuentaPrincipal.saldo": "qCuentas.0.saldoActual"
+  },
+
+  "derived": {
+    "totales.deudaPendiente": {
+      "sumCollectionField": { "collection": "deudas", "field": "monto" }
+    },
+    "flags.tieneDeuda": { "expr": "totales.deudaPendiente > 0" },
+    "flags.esPremium": {
+      "expr": "cuentas[0].categoriaProducto == 'PREMIUM' && cuentas[0].saldoActual > 5000"
+    }
+  },
+
+  "templates": {
+    "motorDecision": {
+      "default": "motor/motor-default.json",
+      "rules": [
+        {
+          "if": [
+            { "path": "flags.esPremium", "op": "=", "value": true },
+            { "path": "score.valor", "op": ">", "value": 720 }
+          ],
+          "template": "motor/motor-premium.json"
+        }
+      ]
+    },
+
+    "sap": {
+      "default": "sap/sap-fnb.json",
+      "rules": [
+        {
+          "if": [
+            {
+              "path": "cuentas.0.categoriaProducto",
+              "op": "=",
+              "value": "PREMIUM"
+            },
+            { "path": "cuentas.0.saldoActual", "op": ">", "value": 5000 }
+          ],
+          "template": "sap/sap-fnb-premium.json"
+        },
+        {
+          "if": [
+            {
+              "path": "cuentas.0.tipoCuenta",
+              "op": "=",
+              "value": "EMPRESARIAL"
+            }
+          ],
+          "template": "sap/sap-fnb-empresarial.json"
+        },
+        {
+          "if": [{ "path": "score.fraude", "op": "=", "value": true }],
+          "template": "sap/sap-fnb-review.json"
+        }
+      ]
+    }
+  },
+
+  "postProcessing": {
+    "_comment": "PostProcessing se ejecuta después de que los datasets se procesan en paralelo y los templates se arman. Los templates están disponibles para ser enviados a los endpoints REST correspondientes.",
+    "executionMode": "conditional",
+    "endpoints": [
+      {
+        "id": "motor-decision-api",
+        "name": "Motor de Decisión FNB",
+        "executeIf": "templateUsed == 'motorDecision'",
+        "endpoint": {
+          "name": "Motor de Decisión FNB",
+          "http": {
+            "method": "POST",
+            "url": "https://api.fnb.motor.com/v1/decision/execute",
+            "timeoutMs": 90000,
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer {{ENV.MOTOR_DECISION_TOKEN}}",
+              "X-Channel": "{{canal}}",
+              "X-Transaction-Id": "{{transaccionId}}",
+              "X-Country": "{{pais}}"
+            }
+          }
+        },
+        "payload": {
+          "useTemplateResult": true,
+          "templateSource": "motorDecision",
+          "mergeStrategy": "templateFirst",
+          "additionalData": {
+            "orchestratorContext": {
+              "flowId": "{{flowId}}",
+              "executionId": "{{executionId}}",
+              "timestamp": "{{timestamp}}",
+              "flowVersion": "1.1.0"
+            },
+            "executionMetadata": {
+              "channel": "{{canal}}",
+              "transactionId": "{{transaccionId}}",
+              "country": "{{pais}}",
+              "templateUsed": "{{templateUsed}}",
+              "templatePath": "{{templatePath}}"
+            },
+            "enrichedCustomerProfile": {
+              "dni": "{{dni}}",
+              "fullName": "{{cliente.nombre}}",
+              "email": "{{cliente.email}}",
+              "isPremium": "{{flags.esPremium}}",
+              "hasDebt": "{{flags.tieneDeuda}}",
+              "debtAmount": "{{totales.deudaPendiente}}",
+              "riskScore": "{{score.valor}}",
+              "fraudFlag": "{{score.fraude}}",
+              "accountInfo": {
+                "primaryAccount": "{{cuentaPrincipal.numero}}",
+                "accountType": "{{cuentaPrincipal.tipo}}",
+                "currentBalance": "{{cuentaPrincipal.saldo}}"
+              }
+            }
+          }
+        },
+        "responseMapping": {
+          "decision": "$.result.decision",
+          "riskLevel": "$.result.riskLevel",
+          "approvedAmount": "$.result.approvedAmount",
+          "conditions": "$.result.conditions",
+          "motives": "$.result.motives",
+          "decisionId": "$.result.decisionId",
+          "expiresAt": "$.result.expiresAt"
+        },
+        "errorHandling": {
+          "strategy": "retry",
+          "maxRetries": 3,
+          "retryDelayMs": 2000,
+          "fallbackResponse": {
+            "decision": "MANUAL_REVIEW",
+            "riskLevel": "HIGH",
+            "approvedAmount": 0,
+            "conditions": ["Requiere revisión manual"],
+            "motives": ["Error en sistema de decisión automática"],
+            "decisionId": null,
+            "expiresAt": null
+          }
+        },
+        "audit": {
+          "enabled": true,
+          "logRequest": true,
+          "logResponse": true,
+          "logHeaders": false
+        }
+      },
+      {
+        "id": "sap-integration-api",
+        "name": "Integración SAP FNB",
+        "executeIf": "templateUsed == 'sap'",
+        "endpoint": {
+          "name": "Integración SAP FNB",
+          "http": {
+            "method": "POST",
+            "url": "https://sap.fnb.com/api/v2/financial/process",
+            "timeoutMs": 120000,
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Basic {{ENV.SAP_AUTH_TOKEN}}",
+              "X-SAP-Client": "{{ENV.SAP_CLIENT_ID}}",
+              "X-Channel": "{{canal}}",
+              "X-Transaction-Id": "{{transaccionId}}"
+            }
+          }
+        },
+        "payload": {
+          "useTemplateResult": true,
+          "templateSource": "sap",
+          "mergeStrategy": "templateFirst",
+          "additionalData": {
+            "sapIntegrationMetadata": {
+              "sourceSystem": "ORCHESTRATOR",
+              "flowVersion": "1.1.0",
+              "executionId": "{{executionId}}",
+              "timestamp": "{{timestamp}}",
+              "templateUsed": "{{templateUsed}}",
+              "templatePath": "{{templatePath}}",
+              "channel": "{{canal}}",
+              "country": "{{pais}}"
+            },
+            "enrichedCustomerContext": {
+              "dni": "{{dni}}",
+              "fullName": "{{cliente.nombre}}",
+              "email": "{{cliente.email}}",
+              "accountContract": "{{cuentaContrato}}",
+              "primaryAccount": "{{cuentaPrincipal.numero}}",
+              "accountType": "{{cuentaPrincipal.tipo}}",
+              "currentBalance": "{{cuentaPrincipal.saldo}}",
+              "isPremium": "{{flags.esPremium}}",
+              "hasOutstandingDebt": "{{flags.tieneDeuda}}",
+              "totalDebtAmount": "{{totales.deudaPendiente}}",
+              "riskProfile": {
+                "score": "{{score.valor}}",
+                "fraudFlag": "{{score.fraude}}",
+                "modelVersion": "{{score.modeloVersion}}"
+              },
+              "productInfo": {
+                "activeProductsCount": "{{productos.cantidad}}",
+                "primaryCategory": "{{productos.primeraCategoria}}"
+              }
+            }
+          }
+        },
+        "responseMapping": {
+          "sapDocumentId": "$.document.id",
+          "documentNumber": "$.document.number",
+          "status": "$.document.status",
+          "processedAt": "$.document.processedAt",
+          "financialEntries": "$.document.entries",
+          "balanceImpact": "$.document.balanceImpact",
+          "approvalRequired": "$.document.approvalRequired",
+          "workflowId": "$.workflow.id"
+        },
+        "errorHandling": {
+          "strategy": "retry",
+          "maxRetries": 2,
+          "retryDelayMs": 3000,
+          "fallbackResponse": {
+            "sapDocumentId": null,
+            "documentNumber": null,
+            "status": "FAILED",
+            "processedAt": null,
+            "error": "SAP integration temporarily unavailable",
+            "requiresManualProcessing": true
+          }
+        },
+        "audit": {
+          "enabled": true,
+          "logRequest": true,
+          "logResponse": true,
+          "logHeaders": true
+        }
+      },
+      {
+        "id": "fraud-validation-api",
+        "name": "Validación Antifraude",
+        "executeIf": "score.fraude == true || score.valor < 500",
+        "endpoint": {
+          "name": "Validación Antifraude",
+          "http": {
+            "method": "POST",
+            "url": "https://fraud.fnb.com/api/v1/validate",
+            "timeoutMs": 45000,
+            "headers": {
+              "Content-Type": "application/json",
+              "X-API-Key": "{{ENV.FRAUD_API_KEY}}",
+              "X-Channel": "{{canal}}",
+              "X-Transaction-Id": "{{transaccionId}}"
+            }
+          }
+        },
+        "payload": {
+          "useTemplateResult": false,
+          "staticPayload": {
+            "validationType": "POST_PROCESSING",
+            "customer": {
+              "dni": "{{dni}}",
+              "accountContract": "{{cuentaContrato}}"
+            },
+            "riskData": {
+              "score": "{{score.valor}}",
+              "fraudFlag": "{{score.fraude}}",
+              "modelVersion": "{{score.modeloVersion}}"
+            },
+            "transactionContext": {
+              "transactionId": "{{transaccionId}}",
+              "channel": "{{canal}}",
+              "country": "{{pais}}",
+              "timestamp": "{{timestamp}}"
+            },
+            "accountData": {
+              "primaryAccount": "{{cuentaPrincipal.numero}}",
+              "accountType": "{{cuentaPrincipal.tipo}}",
+              "currentBalance": "{{cuentaPrincipal.saldo}}",
+              "isPremium": "{{flags.esPremium}}"
+            }
+          }
+        },
+        "responseMapping": {
+          "validationId": "$.validation.id",
+          "riskLevel": "$.validation.riskLevel",
+          "blockRecommendation": "$.validation.blockRecommendation",
+          "additionalChecks": "$.validation.additionalChecks",
+          "validatedAt": "$.validation.timestamp"
+        },
+        "errorHandling": {
+          "strategy": "failfast",
+          "fallbackResponse": {
+            "validationId": null,
+            "riskLevel": "HIGH",
+            "blockRecommendation": true,
+            "additionalChecks": ["Manual validation required"],
+            "validatedAt": null,
+            "error": "Fraud validation service unavailable"
+          }
+        },
+        "audit": {
+          "enabled": true,
+          "logRequest": true,
+          "logResponse": true,
+          "logHeaders": false
+        }
+      },
+      {
+        "id": "notification-service",
+        "name": "Servicio de Notificaciones",
+        "executeIf": "always",
+        "endpoint": {
+          "name": "Servicio de Notificaciones",
+          "http": {
+            "method": "POST",
+            "url": "https://notifications.fnb.com/api/v1/flow-completion",
+            "timeoutMs": 30000,
+            "headers": {
+              "Content-Type": "application/json",
+              "X-API-Key": "{{ENV.NOTIFICATION_API_KEY}}",
+              "X-Service": "ORCHESTRATOR"
+            }
+          }
+        },
+        "payload": {
+          "useTemplateResult": false,
+          "staticPayload": {
+            "eventType": "FLOW_COMPLETED",
+            "flowName": "FlowFNBv1",
+            "flowVersion": "1.1.0",
+            "executionId": "{{executionId}}",
+            "customer": {
+              "dni": "{{dni}}",
+              "email": "{{cliente.email}}",
+              "name": "{{cliente.nombre}}"
+            },
+            "execution": {
+              "startedAt": "{{timestamp}}",
+              "channel": "{{canal}}",
+              "transactionId": "{{transaccionId}}",
+              "country": "{{pais}}"
+            },
+            "summary": {
+              "templateUsed": "{{templateUsed}}",
+              "isPremiumCustomer": "{{flags.esPremium}}",
+              "hasOutstandingDebt": "{{flags.tieneDeuda}}",
+              "riskScore": "{{score.valor}}",
+              "fraudFlag": "{{score.fraude}}"
+            }
+          }
+        },
+        "responseMapping": {
+          "notificationId": "$.id",
+          "status": "$.status",
+          "deliveredAt": "$.deliveredAt"
+        },
+        "errorHandling": {
+          "strategy": "ignore"
+        },
+        "audit": {
+          "enabled": false
+        }
+      },
+      {
+        "id": "audit-trail-service",
+        "name": "Registro de Auditoría",
+        "executeIf": "flags.esPremium == true || score.fraude == true",
+        "endpoint": {
+          "name": "Registro de Auditoría",
+          "http": {
+            "method": "POST",
+            "url": "https://audit.fnb.com/api/v1/trail/financial-flow",
+            "timeoutMs": 60000,
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer {{ENV.AUDIT_TOKEN}}",
+              "X-Compliance-Level": "HIGH"
+            }
+          }
+        },
+        "payload": {
+          "useTemplateResult": true,
+          "additionalData": {
+            "auditMetadata": {
+              "flowName": "FlowFNBv1",
+              "flowVersion": "1.1.0",
+              "executionId": "{{executionId}}",
+              "auditLevel": "DETAILED",
+              "complianceRequired": true,
+              "timestamp": "{{timestamp}}"
+            },
+            "customerProfile": {
+              "dni": "{{dni}}",
+              "accountContract": "{{cuentaContrato}}",
+              "isPremium": "{{flags.esPremium}}",
+              "riskProfile": {
+                "score": "{{score.valor}}",
+                "fraudFlag": "{{score.fraude}}",
+                "debtAmount": "{{totales.deudaPendiente}}"
+              }
+            },
+            "transactionContext": {
+              "transactionId": "{{transaccionId}}",
+              "channel": "{{canal}}",
+              "country": "{{pais}}"
+            }
+          }
+        },
+        "responseMapping": {
+          "auditId": "$.audit.id",
+          "trailId": "$.audit.trailId",
+          "complianceStatus": "$.audit.complianceStatus",
+          "retentionPeriod": "$.audit.retentionPeriod"
+        },
+        "errorHandling": {
+          "strategy": "retry",
+          "maxRetries": 2,
+          "retryDelayMs": 1500,
+          "fallbackResponse": {
+            "auditId": null,
+            "trailId": null,
+            "complianceStatus": "PENDING_MANUAL_AUDIT",
+            "retentionPeriod": null,
+            "error": "Audit service temporarily unavailable"
+          }
+        },
+        "audit": {
+          "enabled": true,
+          "logRequest": true,
+          "logResponse": true,
+          "logHeaders": false
+        }
+      }
+    ]
+  },
+
+  "audit": {
+    "trace": {
+      "enabled": true,
+      "fields": [
+        "inputs",
+        "datasets",
+        "derived",
+        "mappingContext",
+        "chosenTemplates",
+        "payloads",
+        "postProcessingResults"
+      ]
+    }
+  }
+}

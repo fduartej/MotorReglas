@@ -1,0 +1,20 @@
+{
+  "_meta": { "required": ["cliente.nombre", "transaccionId"] },
+
+  "SolicitudPremium": {
+    "Cliente": {
+      "Nombre": "{{ cliente.nombre }}",
+      "Score": "{{ score.valor }}"
+    },
+    "Resumen": {
+      "CuentasActivas": "{{ cuentas.size }}",
+      "PrimeraCuenta": {
+        "Numero": "{{ cuentas[0].numeroCuenta }}",
+        "Tipo": "{{ cuentas[0].tipoCuenta }}",
+        "Saldo": "{{ cuentas[0].saldoActual }}"
+      },
+      "DeudasPendientes": "{{ deudas.size }}"
+    },
+    "TransaccionId": "{{ transaccionId }}"
+  }
+}

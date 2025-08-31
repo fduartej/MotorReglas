@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  orchestrator:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - EXTERNAL_FLOWS_PATH=/config/Flows
+      - EXTERNAL_TEMPLATES_PATH=/config/Templates
+      - EXTERNAL_CACHE_SECONDS=15
+      - ConnectionStrings__primary=Host=postgres;Database=primary;Username=postgres;Password=password
+      - ConnectionStrings__audit=Host=postgres;Database=audit;Username=postgres;Password=password
+      - Redis__Configuration=redis:6379
+      - RISK_API_KEY=your-risk-api-key
+      - CATALOG_TOKEN=your-catalog-token
+    volumes:
+      - ./config/flows:/config/Flows
+      - ./config/templates:/config/Templates
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=primary
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:

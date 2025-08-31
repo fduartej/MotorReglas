@@ -1,0 +1,11 @@
+{
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "driver": "SQLite",
+      "name": "dbcon",
+      "database": "C:\\opt\\code\\database\\demodb.db"
+    }
+  ],
+  "sqltools.useNodeRuntime": true
+}

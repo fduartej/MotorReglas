@@ -1,0 +1,88 @@
+{
+  "id": "simple-sequential-flow",
+  "name": "Simple Sequential PostProcessing",
+  "description": "Flow con PostProcessing secuencial básico",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "default-rule",
+      "name": "Default Processing Rule",
+      "condition": "true",
+      "template": "default",
+      "priority": 1,
+      "isActive": true
+    }
+  ],
+  "datasets": [
+    {
+      "id": "simple-data",
+      "name": "Simple Data Source",
+      "endpoint": "https://jsonplaceholder.typicode.com/posts/1",
+      "method": "GET",
+      "timeout": 30
+    }
+  ],
+  "postProcessing": {
+    "executionMode": "sequential",
+    "endpoints": [
+      {
+        "id": "first-endpoint",
+        "name": "First API Call",
+        "endpoint": {
+          "url": "https://jsonplaceholder.typicode.com/posts",
+          "method": "POST",
+          "timeout": 30,
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        },
+        "payload": {
+          "useTemplateResult": true
+        },
+        "responseMapping": {
+          "postId": "$.id",
+          "title": "$.title"
+        },
+        "errorHandling": {
+          "strategy": "retry",
+          "maxRetries": 2,
+          "retryDelayMs": 1000
+        },
+        "audit": {
+          "enabled": true,
+          "logRequest": true,
+          "logResponse": true
+        }
+      },
+      {
+        "id": "second-endpoint",
+        "name": "Second API Call",
+        "endpoint": {
+          "url": "https://jsonplaceholder.typicode.com/users/1",
+          "method": "GET",
+          "timeout": 30
+        },
+        "payload": {
+          "useTemplateResult": false,
+          "staticPayload": {
+            "message": "Second call executed",
+            "timestamp": "{{timestamp}}"
+          }
+        },
+        "responseMapping": {
+          "userId": "$.id",
+          "userName": "$.name",
+          "userEmail": "$.email"
+        },
+        "errorHandling": {
+          "strategy": "failfast"
+        },
+        "audit": {
+          "enabled": true,
+          "logRequest": false,
+          "logResponse": true
+        }
+      }
+    ]
+  }
+}

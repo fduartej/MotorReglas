@@ -1,0 +1,42 @@
+{
+  "version": "1.0",
+  "metadata": {
+    "name": "FNB_Premium",
+    "description": "Template para clientes premium FNB",
+    "requiredContext": ["input", "datasets", "derived"]
+  },
+  "template": {
+    "transaccionId": "{{ input.transaccionId }}",
+    "cliente": {
+      "dni": "{{ input.dni }}",
+      "nombre": "{{ datasets.cliente.nombre ?? 'Cliente Premium' }}",
+      "tipo": "premium",
+      "segmento": "{{ datasets.cliente.segmento ?? 'premium' }}",
+      "beneficios": [
+        "acceso_prioritario",
+        "comisiones_preferenciales",
+        "asesor_dedicado"
+      ]
+    },
+    "cuenta": {
+      "contrato": "{{ input.cuentaContrato }}",
+      "saldo": "{{ datasets.cuenta.saldo ?? 0 }}",
+      "estado": "{{ datasets.cuenta.estado ?? 'sin_cuenta' }}",
+      "servicios_premium": true
+    },
+    "operacion": {
+      "canal": "{{ input.canal ?? 'web' }}",
+      "pais": "{{ input.pais ?? 'CO' }}",
+      "timestamp": "{{ date.utc_now }}",
+      "prioridad": "alta",
+      "procesamiento": "express"
+    },
+    "configuracion": {
+      "esPremium": true,
+      "tieneCuenta": "{{ derived.tieneCuenta ?? false }}",
+      "template": "FNB_Premium",
+      "limite_operaciones": 1000000,
+      "notificaciones_especiales": true
+    }
+  }
+}

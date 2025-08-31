@@ -1,0 +1,38 @@
+{
+  "version": "1.0",
+  "metadata": {
+    "name": "FNB_Empresarial",
+    "description": "Template para clientes empresariales FNB",
+    "requiredContext": ["input", "datasets"]
+  },
+  "template": {
+    "transaccionId": "{{ input.transaccionId }}",
+    "cliente": {
+      "dni": "{{ input.dni }}",
+      "nombre": "{{ datasets.cliente.nombre ?? 'Cliente Empresarial' }}",
+      "tipo": "empresarial",
+      "segmento": "{{ datasets.cliente.segmento ?? 'empresarial' }}",
+      "servicios": ["banca_empresarial", "credito_corporativo", "tesoreria"]
+    },
+    "cuenta": {
+      "contrato": "{{ input.cuentaContrato }}",
+      "saldo": "{{ datasets.cuenta.saldo ?? 0 }}",
+      "estado": "{{ datasets.cuenta.estado ?? 'sin_cuenta' }}",
+      "tipo_cuenta": "empresarial"
+    },
+    "operacion": {
+      "canal": "{{ input.canal ?? 'branch' }}",
+      "pais": "{{ input.pais ?? 'CO' }}",
+      "timestamp": "{{ date.utc_now }}",
+      "prioridad": "alta",
+      "requiere_aprobacion": true
+    },
+    "configuracion": {
+      "esEmpresarial": true,
+      "tieneCuenta": "{{ derived.tieneCuenta ?? false }}",
+      "template": "FNB_Empresarial",
+      "limite_operaciones": 5000000,
+      "requiere_autenticacion_doble": true
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "metadata": {
+    "name": "FNB_Base",
+    "description": "Template base para FNB",
+    "requiredContext": ["input", "datasets"]
+  },
+  "template": {
+    "transaccionId": "{{ input.transaccionId }}",
+    "cliente": {
+      "dni": "{{ input.dni }}",
+      "nombre": "{{ datasets.cliente.nombre ?? 'Cliente' }}",
+      "tipo": "{{ datasets.cliente.tipoCliente ?? 'regular' }}",
+      "segmento": "{{ datasets.cliente.segmento ?? 'general' }}"
+    },
+    "cuenta": {
+      "contrato": "{{ input.cuentaContrato }}",
+      "saldo": "{{ datasets.cuenta.saldo ?? 0 }}",
+      "estado": "{{ datasets.cuenta.estado ?? 'sin_cuenta' }}"
+    },
+    "operacion": {
+      "canal": "{{ input.canal ?? 'web' }}",
+      "pais": "{{ input.pais ?? 'CO' }}",
+      "timestamp": "{{ date.utc_now }}",
+      "prioridad": "{{ derived.prioridad ?? 'baja' }}"
+    },
+    "configuracion": {
+      "esPremium": "{{ derived.esPremium ?? false }}",
+      "tieneCuenta": "{{ derived.tieneCuenta ?? false }}",
+      "template": "FNB_Base"
+    }
+  }
+}
