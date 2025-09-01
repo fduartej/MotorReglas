@@ -1,0 +1,171 @@
+{
+  "id": "motor-decision-flow",
+  "name": "Motor Decision with PostProcessing",
+  "description": "Flow que ejecuta datasets en paralelo y luego invoca endpoints según el template generado",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "motor-rule",
+      "name": "Motor Decision Rule",
+      "condition": "input.tipoOperacion == 'motor'",
+      "template": "motordecision",
+      "priority": 1,
+      "isActive": true
+    },
+    {
+      "id": "sap-rule",
+      "name": "SAP Integration Rule",
+      "condition": "input.sistema == 'sap'",
+      "template": "sap",
+      "priority": 2,
+      "isActive": true
+    }
+  ],
+  "datasets": [
+    {
+      "id": "customer-data",
+      "name": "Customer Information",
+      "endpoint": "https://api.customer.com/data",
+      "method": "GET",
+      "timeout": 30,
+      "retryPolicy": {
+        "maxRetries": 3,
+        "delayMs": 1000
+      }
+    },
+    {
+      "id": "risk-data",
+      "name": "Risk Assessment",
+      "endpoint": "https://api.risk.com/assess",
+      "method": "POST",
+      "timeout": 45,
+      "retryPolicy": {
+        "maxRetries": 2,
+        "delayMs": 2000
+      }
+    }
+  ],
+  "postProcessing": {
+    "executionMode": "conditional",
+    "endpoints": [
+      {
+        "id": "motor-decision-endpoint",
+        "name": "Motor Decision API",
+        "executeIf": "templateUsed == 'motordecision'",
+        "endpoint": {
+          "url": "https://api.motordecision.com/v1/execute",
+          "method": "POST",
+          "timeout": 60,
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{config.motorDecisionToken}}"
+          }
+        },
+        "payload": {
+          "useTemplateResult": true,
+          "additionalData": {
+            "flowId": "{{flowId}}",
+            "executionId": "{{executionId}}",
+            "timestamp": "{{timestamp}}"
+          }
+        },
+        "responseMapping": {
+          "decision": "$.result.decision",
+          "confidence": "$.result.confidence",
+          "recommendation": "$.result.recommendation"
+        },
+        "errorHandling": {
+          "strategy": "retry",
+          "maxRetries": 3,
+          "retryDelayMs": 2000,
+          "fallbackResponse": {
+            "decision": "manual_review",
+            "confidence": 0,
+            "recommendation": "Escalate to manual review"
+          }
+        },
+        "audit": {
+          "enabled": true,
+          "logRequest": true,
+          "logResponse": true,
+          "logHeaders": false
+        }
+      },
+      {
+        "id": "sap-integration-endpoint",
+        "name": "SAP Integration API",
+        "executeIf": "templateUsed == 'sap'",
+        "endpoint": {
+          "url": "https://sap.company.com/api/v2/process",
+          "method": "POST",
+          "timeout": 90,
+          "headers": {
+            "Content-Type": "application/json",
+            "X-SAP-Client": "{{config.sapClient}}",
+            "Authorization": "Basic {{config.sapAuth}}"
+          }
+        },
+        "payload": {
+          "useTemplateResult": true,
+          "additionalData": {
+            "source": "orchestrator",
+            "processType": "automated"
+          }
+        },
+        "responseMapping": {
+          "sapDocumentId": "$.document.id",
+          "status": "$.document.status",
+          "processedAt": "$.document.processedAt"
+        },
+        "errorHandling": {
+          "strategy": "failfast",
+          "fallbackResponse": {
+            "sapDocumentId": null,
+            "status": "failed",
+            "error": "SAP integration failed"
+          }
+        },
+        "audit": {
+          "enabled": true,
+          "logRequest": true,
+          "logResponse": true,
+          "logHeaders": true
+        }
+      },
+      {
+        "id": "notification-endpoint",
+        "name": "Notification Service",
+        "executeIf": "always",
+        "endpoint": {
+          "url": "https://api.notifications.com/v1/send",
+          "method": "POST",
+          "timeout": 30,
+          "headers": {
+            "Content-Type": "application/json",
+            "X-API-Key": "{{config.notificationApiKey}}"
+          }
+        },
+        "payload": {
+          "useTemplateResult": false,
+          "staticPayload": {
+            "type": "flow_completed",
+            "flowId": "{{flowId}}",
+            "executionId": "{{executionId}}",
+            "completedAt": "{{timestamp}}",
+            "summary": "Flow execution completed successfully"
+          }
+        },
+        "responseMapping": {
+          "notificationId": "$.id",
+          "sent": "$.sent"
+        },
+        "errorHandling": {
+          "strategy": "ignore"
+        },
+        "audit": {
+          "enabled": false
+        }
+      }
+    ]
+  }
+}

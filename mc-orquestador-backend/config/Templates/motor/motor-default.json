@@ -1,0 +1,20 @@
+{
+  "_meta": { "required": ["cliente.nombre", "transaccionId"] },
+
+  "MotorDecision": {
+    "Cliente": {
+      "Nombre": "{{ cliente.nombre }}",
+      "Score": "{{ score.valor }}"
+    },
+    "Cuentas": [
+      {{ for c in cuentas -}}
+      {
+        "Numero": "{{ c.numeroCuenta }}",
+        "Saldo": "{{ c.saldoActual }}"
+      }{{ if !for.last }},{{ end }}
+      {{- end }}
+    ],
+    "Decision": "APROBADO",
+    "TransaccionId": "{{ transaccionId }}"
+  }
+}

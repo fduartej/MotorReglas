@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mc-financiamiento-backend
+  labels:
+    app: mc-financiamiento-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mc-financiamiento-backend
+  template:
+    metadata:
+      labels:
+        app: mc-financiamiento-backend
+    spec:
+      containers:
+        - name: mc-financiamiento-backend
+          image: acrdemos123.azurecr.io/mc-financiamiento-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"

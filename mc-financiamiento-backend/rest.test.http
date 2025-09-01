@@ -25,6 +25,27 @@ X-Access-Token: dAG920pF3K3XQ8qQOvATPIun
   }
 }
 
+GET http://localhost:5000/health HTTP/1.1
+Accept: application/json
+
+GET http://apim-demo-student-01.azure-api.net/mc-financiamiento/health HTTP/1.1
+
+GET http://apim-demo-student-01.azure-api.net/mc-financiamiento/v1/health HTTP/1.1
+
+
+POST http://apim-demo-student-01.azure-api.net/mc-financiamiento/loan/40382034/evaluation HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "LoanAmountRequested":3000,
+  "LoanTerm":12
+}
+
+GET http://apim-demo-student-01.azure-api.net/mc-financiamiento/ecomerce/catalogo HTTP/1.1
+Accept: application/json
+
+
 POST http://localhost:5000/loan/40382034/evaluation HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -33,6 +54,8 @@ Content-Type: application/json
   "LoanAmountRequested":3000,
   "LoanTerm":12
 }
+
+
 
 GET https://financiamiento.gorules.io/api/projects/2f62702a-54e1-43cb-a525-173da371a016/releases/78649bab-5991-4535-847b-97790d113c33/download HTTP/1.1
 Accept: application/zip
@@ -47,3 +70,35 @@ Accept: application/json
 
 GET http://localhost:5000/ecomerce/catalogo/1
 Accept: application/json
+
+POST http://localhost:82/engine/execute HTTP/1.1
+
+POST http://apim-demo-student-01.azure-api.net/mc-ruleengine/engine/execute HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "decision": "financiamiento",
+  "modelo": "CaliddaUnderwritingCreditFNB",
+  "inputData": {
+    "customer": {
+      "dni": "40382034",
+      "nseCategoria": "C",
+      "accountType": "P",
+      "isTenant": false
+    },
+    "transactionData": {
+      "balanceAvailable": 5000,
+      "creditBlocked": false,
+      "loanAmountRequested": 5000,
+      "loanTerm": 12
+    },
+    "historicalPreCalculated": {
+      "documentosPendientesPago": 1,
+      "numeroMesesConsumoGasZero": 0,
+      "mesesDeHabilitadoGas": 24,
+      "numeroCortesGas": 0,
+      "corteGasDurante12UltimoMeses": 0
+    }
+  }
+}

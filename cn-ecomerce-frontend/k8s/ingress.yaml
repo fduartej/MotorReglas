@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cn-ecomerce-frontend-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: cn-ecomerce-frontend.contoso.com # Cambia esto por tu dominio
+      http:
+        paths:
+          - path: /cn-ecomerce-frontend
+            pathType: Prefix
+            backend:
+              service:
+                name: cn-ecomerce-frontend
+                port:
+                  number: 80

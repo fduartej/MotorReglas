@@ -1,0 +1,80 @@
+### Orchestrator Test - Health Check
+GET http://localhost:5000/api/Orchestrator/health
+
+###
+
+### Orchestrator Test - Build Payload FNB
+POST http://localhost:5000/api/Orchestrator/build-payload/FNBv1
+Content-Type: application/json
+
+{
+  "inputData": {
+    "dni": "12345678",
+    "cuentaContrato": "ACC123456",
+    "canal": "web",
+    "transaccionId": 987654321,
+    "pais": "CO"
+  }
+}
+
+###
+
+### Orchestrator Test - Build Payload FNB with minimal data
+POST http://localhost:5000/api/Orchestrator/build-payload/FNB
+Content-Type: application/json
+
+{
+  "inputData": {
+    "dni": "87654321",
+    "transaccionId": 123456789
+  }
+}
+
+###
+
+### Orchestrator Test - Build Payload FNB for premium user
+POST http://localhost:5000/api/Orchestrator/build-payload/FNB
+Content-Type: application/json
+
+{
+  "inputData": {
+    "dni": "11111111",
+    "cuentaContrato": "PREM789",
+    "canal": "mobile",
+    "transaccionId": 555666777,
+    "pais": "CO",
+    "tipoCliente": "premium"
+  }
+}
+
+###
+
+### Orchestrator Test - Build Payload FNB for empresarial user  
+POST http://localhost:5000/api/Orchestrator/build-payload/FNB
+Content-Type: application/json
+
+{
+  "inputData": {
+    "dni": "22222222", 
+    "cuentaContrato": "EMP456",
+    "canal": "branch",
+    "transaccionId": 888999000,
+    "pais": "CO",
+    "tipoCliente": "empresarial"
+  }
+}
+
+###
+
+### Orchestrator Test - Invalid flow name
+POST http://localhost:5000/api/Orchestrator/build-payload/InvalidFlow
+Content-Type: application/json
+
+{
+  "inputData": {
+    "dni": "12345678",
+    "transaccionId": 987654321
+  }
+}
+
+###

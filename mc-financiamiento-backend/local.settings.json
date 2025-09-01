@@ -7,7 +7,7 @@
     }
   },
   "Integration": {
-    "GoRules.Endpoint.001": "http://localhost:3001/engine/execute",
+    "GoRules.Endpoint.001": "http://apim-demo-student-01.azure-api.net/mc-ruleengine/engine/execute",
     "GoRules.Endpoint.002": "https://financiamiento.gorules.io/api/projects/demo/evaluate/caliddaunderwritingcredit-fnb",
     "GoRules.Endpoint.001.X-Access-Token-value": "dAG920pF3K3XQ8qQOvATPIun",
     "GoRules.Endpoint.001.X-Access-Token-Key": "X-Access-Token"
@@ -16,7 +16,7 @@
     "NoSql.CosmosDb": "AccountEndpoint=https://cosmos-digital.documents.azure.com:443/;AccountKey=BsbdmauQWrmIOa8W3u8Gp604sO1x9kXKCSzWWl7zc5TPleTCDaeI2fdzHR6hHXhJ9IPYK7nIIombACDbVnnVQg==;"
   },
   "ConnectionStrings": {
-    "DefaultConnection": "DataSource=app.db;Cache=Shared"
+    "DefaultConnection": "Server=tcp:sql-server-demo01.database.windows.net,1433;Initial Catalog=sql-demo;Persist Security Info=False;User ID=demo;Password=Adivina21!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
   },
   "OpenTelemetry": {
     "ServiceName": "mc-financiamiento-bancked"

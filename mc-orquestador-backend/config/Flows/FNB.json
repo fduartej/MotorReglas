@@ -1,0 +1,82 @@
+{
+  "name": "FNB",
+  "description": "Flow para procesamiento FNB",
+  "version": "1.0",
+  "datasets": [
+    {
+      "name": "cliente",
+      "type": "sql",
+      "query": "SELECT dni, nombre, tipoCliente, segmento FROM clientes WHERE dni = @dni",
+      "parameters": [
+        {
+          "name": "dni",
+          "source": "input.dni",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "cacheKey": "cliente_{dni}",
+      "cacheSeconds": 300
+    },
+    {
+      "name": "cuenta",
+      "type": "sql",
+      "query": "SELECT cuentaContrato, saldo, estado FROM cuentas WHERE cuentaContrato = @cuenta AND dni = @dni",
+      "parameters": [
+        {
+          "name": "cuenta",
+          "source": "input.cuentaContrato",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "dni",
+          "source": "input.dni",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "cacheKey": "cuenta_{dni}_{cuenta}",
+      "cacheSeconds": 180
+    }
+  ],
+  "derived": [
+    {
+      "name": "esPremium",
+      "expression": "datasets.cliente.tipoCliente == 'premium'",
+      "type": "boolean"
+    },
+    {
+      "name": "tieneCuenta",
+      "expression": "datasets.cuenta != null && datasets.cuenta.estado == 'activa'",
+      "type": "boolean"
+    },
+    {
+      "name": "prioridad",
+      "expression": "derived.esPremium ? 'alta' : (derived.tieneCuenta ? 'media' : 'baja')",
+      "type": "string"
+    }
+  ],
+  "templateRules": [
+    {
+      "condition": "input.tipoCliente == 'empresarial'",
+      "template": "FNB_Empresarial"
+    },
+    {
+      "condition": "derived.esPremium",
+      "template": "FNB_Premium"
+    },
+    {
+      "condition": "derived.tieneCuenta",
+      "template": "FNB_ConCuenta"
+    },
+    {
+      "condition": "true",
+      "template": "FNB_Base"
+    }
+  ],
+  "validation": {
+    "required": ["dni", "transaccionId"],
+    "optional": ["cuentaContrato", "canal", "pais", "tipoCliente"]
+  }
+}

@@ -1,6 +1,5 @@
 using System.Data;
-//using Microsoft.Data.SqlClient;
-using Microsoft.Data.Sqlite;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure.Data.Sql;
@@ -19,6 +18,6 @@ public class DapperContext
         {
             throw new InvalidOperationException("Connection string is not set");
         }
-        return new SqliteConnection(_connectionString);
+        return new SqlConnection(_connectionString);
     }
 }

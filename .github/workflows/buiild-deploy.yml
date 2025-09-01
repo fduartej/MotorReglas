@@ -1,0 +1,142 @@
+name: Build Push Deploy
+
+on:
+  push:
+    branches:
+      - devops # Cambia esto si tu rama principal tiene otro nombre
+
+jobs:
+  # Job para el frontend
+  build-push-deploy-frontend-ecomerce:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Clonar el repositorio
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Iniciar sesión en Azure Container Registry
+      - name: Login to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.AZURE_ACR_SERVER }}
+          username: ${{ secrets.AZURE_ACR_USERNAME }}
+          password: ${{ secrets.AZURE_ACR_PASSWORD }}
+
+      # 3. Construir la imagen Docker
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.AZURE_ACR_SERVER }}/cn-ecomerce-frontend:latest ./cn-ecomerce-frontend
+
+      # 4. Subir la imagen a Azure Container Registry
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.AZURE_ACR_SERVER }}/cn-ecomerce-frontend:latest
+
+      # 5. Autenticarse en Azure
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # 6. Configurar acceso al clúster de AKS
+      - name: Set up AKS context
+        run: |
+          az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --name ${{ secrets.AZURE_AKS_CLUSTER }} --overwrite-existing
+
+      # 7. Desplegar en AKS
+      - name: Deploy frontend to AKS
+        run: |
+          kubectl apply -f ./cn-ecomerce-frontend/k8s/deployment.yaml
+          kubectl apply -f ./cn-ecomerce-frontend/k8s/service.yaml
+          kubectl apply -f ./cn-ecomerce-frontend/k8s/ingress.yaml
+
+  # Job para el backend
+  build-push-deploy-backend-financiamiento:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Clonar el repositorio
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Iniciar sesión en Azure Container Registry
+      - name: Login to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.AZURE_ACR_SERVER }}
+          username: ${{ secrets.AZURE_ACR_USERNAME }}
+          password: ${{ secrets.AZURE_ACR_PASSWORD }}
+
+      # 3. Construir la imagen Docker del backend
+      - name: Build Docker image for backend
+        run: |
+          docker build -t ${{ secrets.AZURE_ACR_SERVER }}/mc-financiamiento-backend:latest ./mc-financiamiento-backend
+
+      # 4. Subir la imagen Docker del backend
+      - name: Push Docker image for backend
+        run: |
+          docker push ${{ secrets.AZURE_ACR_SERVER }}/mc-financiamiento-backend:latest
+
+      # 5. Autenticarse en Azure
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # 6. Configurar acceso al clúster de AKS
+      - name: Set up AKS context
+        run: |
+          az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --name ${{ secrets.AZURE_AKS_CLUSTER }} --overwrite-existing
+
+      # 7. Desplegar en AKS
+      - name: Deploy frontend to AKS
+        run: |
+          kubectl apply -f ./mc-financiamiento-backend/k8s/deployment.yaml
+          kubectl apply -f ./mc-financiamiento-backend/k8s/service.yaml
+          kubectl apply -f ./mc-financiamiento-backend/k8s/ingress.yaml
+
+  # Job para el backend
+  build-push-deploy-backend-ruleengine:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Clonar el repositorio
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Iniciar sesión en Azure Container Registry
+      - name: Login to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.AZURE_ACR_SERVER }}
+          username: ${{ secrets.AZURE_ACR_USERNAME }}
+          password: ${{ secrets.AZURE_ACR_PASSWORD }}
+
+      # 3. Construir la imagen Docker del backend
+      - name: Build Docker image for backend
+        run: |
+          docker build -t ${{ secrets.AZURE_ACR_SERVER }}/mc-ruleengine-backend:latest ./mc-ruleengine-backend
+
+      # 4. Subir la imagen Docker del backend
+      - name: Push Docker image for backend
+        run: |
+          docker push ${{ secrets.AZURE_ACR_SERVER }}/mc-ruleengine-backend:latest
+
+      # 5. Autenticarse en Azure
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # 6. Configurar acceso al clúster de AKS
+      - name: Set up AKS context
+        run: |
+          az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --name ${{ secrets.AZURE_AKS_CLUSTER }} --overwrite-existing
+
+      # 7. Desplegar en AKS
+      - name: Deploy frontend to AKS
+        run: |
+          kubectl apply -f ./mc-ruleengine-backend/k8s/deployment.yaml
+          kubectl apply -f ./mc-ruleengine-backend/k8s/service.yaml
+          kubectl apply -f ./mc-ruleengine-backend/k8s/ingress.yaml

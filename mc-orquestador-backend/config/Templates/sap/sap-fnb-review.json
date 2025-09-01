@@ -1,0 +1,13 @@
+{
+  "_meta": { "required": ["cliente.nombre", "transaccionId"] },
+
+  "SolicitudRevision": {
+    "Cliente": {
+      "Nombre": "{{ cliente.nombre }}",
+      "Score": "{{ score.valor }}"
+    },
+    "Estado": "REVISION_FRAUDE",
+    "Alertas": ["Indicador de fraude detectado", "Requiere revision manual"],
+    "TransaccionId": "{{ transaccionId }}"
+  }
+}

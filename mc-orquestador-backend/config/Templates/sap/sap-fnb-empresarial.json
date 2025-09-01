@@ -1,0 +1,18 @@
+{
+  "_meta": { "required": ["cliente.nombre", "transaccionId"] },
+
+  "SolicitudEmpresarial": {
+    "Cliente": { "Nombre": "{{ cliente.nombre }}", "Score": "{{ score.valor }}" },
+    "Tipo": "EMPRESARIAL",
+    "Cuentas": [
+      {{ for c in cuentas -}}
+      {
+        "Numero": "{{ c.numeroCuenta }}",
+        "Tipo": "{{ c.tipoCuenta }}",
+        "Saldo": "{{ c.saldoActual }}"
+      }{{ if !for.last }},{{ end }}
+      {{- end }}
+    ],
+    "TransaccionId": "{{ transaccionId }}"
+  }
+}

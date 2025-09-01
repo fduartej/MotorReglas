@@ -1,0 +1,226 @@
+{
+  "name": "FlowFNB",
+  "version": "1.0.0",
+  "inputs": ["dni", "cuentaContrato", "canal", "transaccionId", "pais"],
+
+  "settings": {
+    "failFast": false,
+    "timezone": "America/Lima"
+  },
+
+  "datasets": [
+    {
+      "name": "qCliente",
+      "type": "sql",
+      "database": "primary",
+      "from": "clientes as c",
+      "select": ["c.email as emailCliente"],
+      "selectDerived": ["CONCAT(c.nombre,' ',c.apellido) as nombreCompleto"],
+      "joins": [
+        {
+          "type": "leftJoin",
+          "table": "direcciones as d",
+          "on": "c.id = d.cliente_id"
+        },
+        {
+          "type": "leftJoin",
+          "table": "ciudades as ciu",
+          "on": "d.ciudad_id = ciu.id"
+        },
+        {
+          "type": "leftJoin",
+          "table": "provincias as p",
+          "on": "ciu.provincia_id = p.id"
+        }
+      ],
+      "where": [
+        { "field": "c.dni", "op": "=", "valueFrom": "dni" },
+        { "field": "d.tipo", "op": "=", "value": "principal" }
+      ],
+      "orderBy": ["c.id asc"],
+      "result": { "mode": "single" },
+      "cache": { "enabled": true, "ttlSec": 1800, "key": "cliente:{dni}" }
+    },
+
+    {
+      "name": "qCuentas",
+      "type": "sql",
+      "database": "primary",
+      "from": "cuentas as c",
+      "select": [
+        "c.numero_cuenta as numeroCuenta",
+        "c.tipo_cuenta as tipoCuenta",
+        "c.saldo_actual as saldoActual",
+        "p.nombre as nombreProducto",
+        "cat.nombre as categoriaProducto",
+        "s.codigo as codigoSucursal",
+        "s.nombre as nombreSucursal"
+      ],
+      "joins": [
+        {
+          "type": "innerJoin",
+          "table": "productos as p",
+          "on": "c.producto_id = p.id"
+        },
+        {
+          "type": "leftJoin",
+          "table": "categorias_producto as cat",
+          "on": "p.categoria_id = cat.id"
+        },
+        {
+          "type": "innerJoin",
+          "table": "sucursales as s",
+          "on": "c.sucursal_id = s.id"
+        }
+      ],
+      "where": [
+        { "field": "c.dni", "op": "=", "valueFrom": "dni" },
+        { "field": "c.estado", "op": "in", "value": ["activa", "preferente"] }
+      ],
+      "orderBy": ["c.fecha_apertura desc"],
+      "limit": 10,
+      "result": { "mode": "array" },
+      "cache": { "enabled": true, "ttlSec": 900, "key": "cuentas:{dni}" }
+    },
+
+    {
+      "name": "rawDeudas",
+      "type": "rawSql",
+      "database": "primary",
+      "sql": "SELECT d.id, d.monto, d.estado, d.fecha FROM deudas d WHERE d.dni = @dni AND d.estado IN ('PEND','VENC') ORDER BY d.fecha DESC",
+      "params": { "dni": "{dni}" },
+      "result": { "mode": "array" },
+      "cache": { "enabled": true, "ttlSec": 300, "key": "deudas:{dni}" }
+    },
+
+    {
+      "name": "apiScore",
+      "type": "http",
+      "http": {
+        "method": "GET",
+        "url": "https://risk.example.com/score?dni={{dni}}&country={{pais}}",
+        "headers": {
+          "x-api-key": "{{ENV.RISK_API_KEY}}",
+          "accept": "application/json"
+        },
+        "timeoutMs": 1500,
+        "retry": { "maxAttempts": 2, "backoffMs": 200 },
+        "resultPath": "$"
+      },
+      "result": { "mode": "single" },
+      "extract": {
+        "valor": "data.score",
+        "banderaFraude": "data.flags.fraud",
+        "modeloVersion": "meta.modelVersion"
+      },
+      "cache": { "enabled": true, "ttlSec": 600, "key": "score:{dni}:{pais}" }
+    },
+
+    {
+      "name": "apiProductosActivos",
+      "type": "http",
+      "http": {
+        "method": "GET",
+        "url": "https://catalog.example.com/customers/{{dni}}/products",
+        "headers": { "authorization": "Bearer {{ENV.CATALOG_TOKEN}}" },
+        "timeoutMs": 2000,
+        "resultPath": "items"
+      },
+      "result": { "mode": "array" },
+      "resultPaths": [
+        { "as": "primeraCategoria", "path": "0.category" },
+        { "as": "cantidadProductos", "path": "length" }
+      ],
+      "cache": { "enabled": true, "ttlSec": 300, "key": "productos:{dni}" }
+    }
+  ],
+
+  "collections": {
+    "cuentas": { "from": "qCuentas" },
+    "deudas": { "from": "rawDeudas" },
+    "productos": { "from": "apiProductosActivos" }
+  },
+
+  "mapping": {
+    "cliente.nombre": "qCliente.nombreCompleto",
+    "cliente.email": "qCliente.emailCliente",
+    "score.valor": "apiScore.valor",
+    "score.fraude": "apiScore.banderaFraude",
+    "score.modeloVersion": "apiScore.modeloVersion",
+    "productos.primeraCategoria": "apiProductosActivos.primeraCategoria",
+    "productos.cantidad": "apiProductosActivos.cantidadProductos",
+    "cuentaPrincipal.numero": "qCuentas.0.numeroCuenta",
+    "cuentaPrincipal.tipo": "qCuentas.0.tipoCuenta",
+    "cuentaPrincipal.saldo": "qCuentas.0.saldoActual"
+  },
+
+  "derived": {
+    "totales.deudaPendiente": {
+      "sumCollectionField": { "collection": "deudas", "field": "monto" }
+    },
+    "flags.tieneDeuda": { "expr": "totales.deudaPendiente > 0" },
+    "flags.esPremium": {
+      "expr": "cuentas[0].categoriaProducto == 'PREMIUM' && cuentas[0].saldoActual > 5000"
+    }
+  },
+
+  "templates": {
+    "motorDecision": {
+      "default": "motor/motor-default.json",
+      "rules": [
+        {
+          "if": [
+            { "path": "flags.esPremium", "op": "=", "value": true },
+            { "path": "score.valor", "op": ">", "value": 720 }
+          ],
+          "template": "motor/motor-premium.json"
+        }
+      ]
+    },
+
+    "sap": {
+      "default": "sap/sap-fnb.json",
+      "rules": [
+        {
+          "if": [
+            {
+              "path": "cuentas.0.categoriaProducto",
+              "op": "=",
+              "value": "PREMIUM"
+            },
+            { "path": "cuentas.0.saldoActual", "op": ">", "value": 5000 }
+          ],
+          "template": "sap/sap-fnb-premium.json"
+        },
+        {
+          "if": [
+            {
+              "path": "cuentas.0.tipoCuenta",
+              "op": "=",
+              "value": "EMPRESARIAL"
+            }
+          ],
+          "template": "sap/sap-fnb-empresarial.json"
+        },
+        {
+          "if": [{ "path": "score.fraude", "op": "=", "value": true }],
+          "template": "sap/sap-fnb-review.json"
+        }
+      ]
+    }
+  },
+
+  "audit": {
+    "trace": {
+      "enabled": true,
+      "fields": [
+        "inputs",
+        "datasets",
+        "derived",
+        "mappingContext",
+        "chosenTemplates",
+        "payloads"
+      ]
+    }
+  }
+}

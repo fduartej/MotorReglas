@@ -16,17 +16,6 @@ using Contoso.Modules.Loan.Config;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Política CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowLocalhost3000", policy =>
-    {
-        policy.WithOrigins("http://localhost:3000") // frontend
-              .AllowAnyHeader()
-              .AllowAnyMethod(); // permite GET, POST, PUT, DELETE, OPTIONS, etc.
-    });
-});
-
 // Cargar configuración desde local.settings.json si está disponible
 builder.Configuration.AddJsonFile("local.settings.json", optional: true, reloadOnChange: true);
 
@@ -73,8 +62,6 @@ var app = builder.Build();
 
 app.UseRouting();
 
-// ¡IMPORTANTE! Usa la política de CORS aquí
-app.UseCors("AllowLocalhost3000");
 
 app.UseAuthorization();
 
